@@ -120,17 +120,20 @@ LOCAL_EXECUTION=ON
 // To initialize the test logger
 TestLogger logger = new TestLogger();
 ```
-| Function Name | Description |
-|------|------|
-| `logInfo(message)` | Log info to report |
-| `logInfoWithScreenshot(message)` | Log info to report with screenshot of current page |
-| `logPass(message)` | Log a test pass for one step |
-| `logPassWithScreenshot(message)` | Log a test pass for one step with screenshot |
-| `logFail(message)` | With screenshot by default, will NOT stop current test |
-| `logFatalError(message)` | With screenshot by default, will STOP current test |
-| `String captureScreen()` | Returning the file path of the screenshot |
+| Function Name                    | Description                                            |
+|----------------------------------|--------------------------------------------------------|
+| `logInfo(message)`               | Log info to report                                     |
+| `logInfoWithScreenshot(message)` | Log info to report with screenshot of current page     |
+| `logPass(message)`               | Log a test pass for one step                           |
+| `logPassWithScreenshot(message)` | Log a test pass for one step with screenshot           |
+| `logFail(message)`               | With screenshot by default, will NOT stop current test |
+| `logFatalError(message)`         | With screenshot by default, will STOP current test     |
+| `String captureScreen()`         | Returning the file path of the screenshot              |
 
 ## Changelog
+*4.3.8*
+- **[Bug Fix]**
+  - Fixed GA4 tracking url regex
 *4.3.7*
 - **[Enhancement]**
   - Added GA4 tracking needed model
