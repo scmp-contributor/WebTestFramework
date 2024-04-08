@@ -139,7 +139,7 @@ public class NetworkUtils {
 
 	public static Map<String, List<GoogleAnalytics4>> getGoogleAnalytics4Requests(RemoteWebDriver driver) {
 		List<GoogleAnalytics> gaData = Collections.synchronizedList(new ArrayList<>());
-		String pattern = "^https://analytics.google.com/([a-z]/)?collect\\?.+";
+		String pattern = "^https://(analytics.google.com|www.google-analytics.com)/([a-z]/)?collect\\?.+(tid=G-).+";
 		return getGA4TrackingRequests(driver, pattern);
 	}
 
