@@ -4,7 +4,6 @@ import com.scmp.framework.annotations.testrail.TestRailTestCase;
 import com.scmp.framework.context.ApplicationContextProvider;
 import com.scmp.framework.context.RunTimeContext;
 import com.scmp.framework.testrail.TestRailManager;
-import com.scmp.framework.testrail.TestRailStatus;
 import com.scmp.framework.testrail.models.TestRun;
 import com.scmp.framework.testrail.models.TestRunResult;
 import com.scmp.framework.testrail.models.TestRunTest;
@@ -18,6 +17,7 @@ import org.testng.ITestNGMethod;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -29,10 +29,14 @@ public class SuiteListener implements ISuiteListener {
 
 	private static final Logger frameworkLogger = LoggerFactory.getLogger(SuiteListener.class);
 	private final RunTimeContext runTimeContext;
+	private final TestRailManager testRailManager;
 
 	public SuiteListener() {
+		// TestNG's context doesn't load the Application context from Spring
+		// That is why use ApplicationContextProvider.getApplicationContext() instead of @Autowired
 		ApplicationContext context = ApplicationContextProvider.getApplicationContext();
 		runTimeContext = context.getBean(RunTimeContext.class);
+		testRailManager = context.getBean(TestRailManager.class);
 	}
 
 	@Override
@@ -45,7 +49,6 @@ public class SuiteListener implements ISuiteListener {
 
 		if (runTimeContext.getFrameworkConfigs().isTestRailUploadTestResult()) {
 			try {
-				initTestRail();
 				createTestRun(suite);
 			} catch (Exception e) {
 				String errorMessage = "Fail to init and create Test Run in TestRail.";
@@ -71,29 +74,9 @@ public class SuiteListener implements ISuiteListener {
 								return null;
 							}
 						})
-				.filter(out -> out!=null)
+				.filter(Objects::nonNull)
 				.sorted()
 				.collect(Collectors.toList());
-	}
-
-	private void initTestRail() {
-		frameworkLogger.info("Initializing TestRailManager...");
-
-		String baseUrl = runTimeContext.getFrameworkConfigs().getTestRailServer();
-		String userName = runTimeContext.getFrameworkConfigs().getTestRailUserName();
-		String password = runTimeContext.getFrameworkConfigs().getTestRailAPIKey();
-
-		TestRailManager.init(baseUrl, userName, password);
-
-		String inProgressId = runTimeContext.getFrameworkConfigs().getTestRailStatusInProgressId();
-		if (inProgressId!=null && Pattern.compile("[0-9]+").matcher(inProgressId).matches()) {
-			TestRailStatus.IN_PROGRESS = Integer.parseInt(inProgressId);
-		} else {
-			// Default use TestRailStatus.Retest for TestRailStatus.IN_PROGRESS
-			TestRailStatus.IN_PROGRESS = TestRailStatus.Retest;
-		}
-
-		frameworkLogger.info("TestRailManager Initialized.");
 	}
 
 	private void createTestRun(ISuite suite) throws IOException {
@@ -118,7 +101,7 @@ public class SuiteListener implements ISuiteListener {
 		final String finalTestRunName = testRunName.trim();
 
 		if (!runTimeContext.getFrameworkConfigs().isTestRailCreateNewTestRun()) {
-			TestRunResult testRunResult = TestRailManager.getInstance().getTestRuns(projectId, timestamp);
+			TestRunResult testRunResult = testRailManager.getTestRuns(projectId, timestamp);
 			Optional<TestRun> existingTestRun =
 					testRunResult.getTestRunList().stream()
 							.filter(testRun -> testRun.getName().trim().equalsIgnoreCase(finalTestRunName))
@@ -137,8 +120,7 @@ public class SuiteListener implements ISuiteListener {
 						.getTestRailTestStatusFilter().replace(" ", "");
 
 				List<TestRunTest> matchedTests =
-						TestRailManager.getInstance()
-								.getAllTestRunTests(existingTestRunData.getId(), statusFilter);
+						testRailManager.getAllTestRunTests(existingTestRunData.getId(), statusFilter);
 				runTimeContext.setGlobalVariables(FILTERED_TEST_OBJECT, matchedTests);
 
 				return;
@@ -149,16 +131,15 @@ public class SuiteListener implements ISuiteListener {
 		// Look up test case ids
 		List<Integer> testCaseIdList;
 		if (runTimeContext.getFrameworkConfigs().isTestRailIncludeAllAutomatedTestCases()) {
-			List<TestRunTest> testCaseList = TestRailManager.getInstance().getAllAutomatedTestCases(projectId);
+			List<TestRunTest> testCaseList = testRailManager.getAllAutomatedTestCases(projectId);
 			testCaseIdList = testCaseList.stream().map(TestRunTest::getId).collect(Collectors.toList());
 		} else {
 			testCaseIdList = this.getAllTestRailTestCases(suite);
 		}
 
-		if (testCaseIdList.size() > 0) {
+		if (!testCaseIdList.isEmpty()) {
 			// Create test run
-			TestRun testRun =
-					TestRailManager.getInstance().addTestRun(projectId, finalTestRunName, testCaseIdList);
+			TestRun testRun = testRailManager.addTestRun(projectId, finalTestRunName, testCaseIdList);
 			// Save new created test run
 			runTimeContext.setGlobalVariables(TEST_RUN_OBJECT, testRun);
 			if (testRun!=null && testRun.getId() > 0) {

@@ -7,6 +7,7 @@ import com.scmp.framework.testrail.models.TestRun;
 import com.scmp.framework.testrail.models.requests.AddTestResultRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,6 +25,9 @@ public class TestRailDataService {
 	private final List<CustomStepResult> testRailCustomStepResultList = new ArrayList<>();
 	private final ConcurrentLinkedQueue<CustomStepResult> pendingTaskQueue = new ConcurrentLinkedQueue<>();
 
+	@Autowired
+	private TestRailManager testRailManager;
+
 	public TestRailDataService(int testcaseId, TestRun testRun) {
 		this.testcaseId = testcaseId;
 		this.testRun = testRun;
@@ -40,8 +44,7 @@ public class TestRailDataService {
 							new AddTestResultRequest(TestRailStatus.IN_PROGRESS, comment, "", new ArrayList<>());
 					try {
 						this.testResultForUploadAttachments =
-								TestRailManager.getInstance()
-										.addTestResult(this.testRun.getId(), this.testcaseId, request);
+								testRailManager.addTestResult(this.testRun.getId(), this.testcaseId, request);
 
 						this.isTestResultForUploadAttachmentsReady = true;
 					} catch (IOException e) {
@@ -83,8 +86,7 @@ public class TestRailDataService {
 
 									frameworkLogger.info("Uploading attachment: " + filePath);
 									Attachment attachment =
-											TestRailManager.getInstance()
-													.addAttachmentToTestResult(
+											testRailManager.addAttachmentToTestResult(
 															testResultForUploadAttachments.getId(), filePath);
 
 									String attachmentRef =
@@ -129,7 +131,7 @@ public class TestRailDataService {
 				new AddTestResultRequest(
 						finalTestResult, "", elapsedInSecond + "s", testRailCustomStepResultList);
 		try {
-			TestRailManager.getInstance().addTestResult(this.testRun.getId(), this.testcaseId, request);
+			testRailManager.addTestResult(this.testRun.getId(), this.testcaseId, request);
 		} catch (IOException e) {
 			frameworkLogger.error("Failed to create test result.", e);
 		}
