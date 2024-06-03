@@ -122,7 +122,7 @@ public class TestRailManager {
 		boolean withNextPage = true;
 		while (withNextPage) {
 			TestCaseResult result = this.getAutomatedTestCases(projectId, offset);
-			if (result.getTestRunTestList().size() > 0) {
+			if (!result.getTestRunTestList().isEmpty()) {
 				allResults.addAll(result.getTestRunTestList());
 			}
 
@@ -204,7 +204,7 @@ public class TestRailManager {
 		boolean withNextPage = true;
 		while (withNextPage) {
 			TestRunTestResult result = this.getTestRunTests(testRunId, statusFilterString, offset);
-			if (result.getTestRunTestList().size() > 0) {
+			if (!result.getTestRunTestList().isEmpty()) {
 				allResults.addAll(result.getTestRunTestList());
 			}
 
@@ -225,7 +225,7 @@ public class TestRailManager {
 		}
 
 		AddTestRunRequest request =
-				new AddTestRunRequest(testRunName, includeTestCaseIds.size()==0, includeTestCaseIds);
+				new AddTestRunRequest(testRunName, includeTestCaseIds.isEmpty(), includeTestCaseIds);
 
 		String CustomQuery = String.format(TestRailService.ADD_TEST_RUN_API, projectId);
 		TestRailService service = retrofit.create(TestRailService.class);

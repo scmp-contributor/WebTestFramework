@@ -3,6 +3,7 @@ package com.scmp.framework.test;
 import com.scmp.framework.context.ApplicationContextProvider;
 import com.scmp.framework.context.RunTimeContext;
 import com.scmp.framework.testng.model.TestInfo;
+import lombok.Getter;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.html5.LocalStorage;
 import org.openqa.selenium.html5.WebStorage;
@@ -20,6 +21,7 @@ import static com.scmp.framework.utils.Constants.TEST_INFO_OBJECT;
 
 public abstract class BaseApp {
 	private static final Logger frameworkLogger = LoggerFactory.getLogger(BaseApp.class);
+	@Getter
 	private final RemoteWebDriver driver;
 	private final RunTimeContext runTimeContext;
 
@@ -28,10 +30,6 @@ public abstract class BaseApp {
 
 		ApplicationContext context = ApplicationContextProvider.getApplicationContext();
 		runTimeContext = context.getBean(RunTimeContext.class);
-	}
-
-	public RemoteWebDriver getDriver() {
-		return this.driver;
 	}
 
 	protected void initApp() {

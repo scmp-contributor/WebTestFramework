@@ -1,11 +1,16 @@
 package com.scmp.framework.testng.model;
 
 import com.scmp.framework.model.Browser;
+import lombok.Getter;
 
 public class RetryMethod {
+	@Getter
 	private int retryCount = 0;
+	@Getter
 	private int maxRetryCount = 0;
+	@Getter
 	private String methodName = "";
+	@Getter
 	private Browser browserType = null;
 	private boolean isRetried = false;
 
@@ -13,18 +18,6 @@ public class RetryMethod {
 		this.retryCount = retryCount;
 		this.maxRetryCount = maxRetryCount;
 		this.methodName = methodName;
-	}
-
-	public String getMethodName() {
-		return this.methodName;
-	}
-
-	public int getRetryCount() {
-		return this.retryCount;
-	}
-
-	public int getMaxRetryCount() {
-		return this.maxRetryCount;
 	}
 
 	public boolean needRetry() {
@@ -42,10 +35,6 @@ public class RetryMethod {
 
 	public void setBrowserType(Browser browserType) {
 		this.browserType = browserType;
-	}
-
-	public Browser getBrowserType() {
-		return this.browserType;
 	}
 
 	public void setRetried(boolean status) {

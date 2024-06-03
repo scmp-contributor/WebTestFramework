@@ -3,6 +3,7 @@ package com.scmp.framework.test;
 import com.scmp.framework.context.ApplicationContextProvider;
 import com.scmp.framework.context.RunTimeContext;
 import com.scmp.framework.services.WebDriverService;
+import lombok.Getter;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import java.util.Random;
 public class BaseTest {
 	private static final Logger frameworkLogger = LoggerFactory.getLogger(BaseTest.class);
 	protected final TestLogger logger;
+	@Getter
 	private final RunTimeContext runTimeContext;
 	private final WebDriverService webDriverService;
 
@@ -21,10 +23,6 @@ public class BaseTest {
 		logger = context.getBean(TestLogger.class);
 		runTimeContext = context.getBean(RunTimeContext.class);
 		webDriverService = context.getBean(WebDriverService.class);
-	}
-
-	public RunTimeContext getRunTimeContext() {
-		return runTimeContext;
 	}
 
 	public RemoteWebDriver getDriver() {
