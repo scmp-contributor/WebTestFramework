@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -21,11 +22,10 @@ public class TestRailDataService {
 
 	private final int testcaseId;
 	private final TestRun testRun;
-	private boolean isTestResultForUploadAttachmentsReady = false;
 	private TestResult testResultForUploadAttachments;
 	private final List<CustomStepResult> testRailCustomStepResultList = new ArrayList<>();
 	private final ExecutorService taskExecuterService = Executors.newFixedThreadPool(5);
-
+	private final CountDownLatch initializationLatch = new CountDownLatch(1);
 	@Autowired
 	private TestRailManager testRailManager;
 
@@ -36,6 +36,7 @@ public class TestRailDataService {
 	}
 
 	private void initTestResultForUploadAttachments() {
+
 		this.taskExecuterService.submit(() -> {
 			// Create a new test result for adding attachment
 			String comment = "Mark In Progress Status";
@@ -45,7 +46,8 @@ public class TestRailDataService {
 				this.testResultForUploadAttachments =
 						testRailManager.addTestResult(this.testRun.getId(), this.testcaseId, request);
 
-				this.isTestResultForUploadAttachmentsReady = true;
+				// Signal that initialization is complete
+				initializationLatch.countDown();
 			} catch (IOException e) {
 				frameworkLogger.error("Failed to create test result.", e);
 			}
@@ -67,16 +69,7 @@ public class TestRailDataService {
 			this.taskExecuterService.submit(() -> {
 				try {
 					// Wait for test result for attachment ready
-					int maxWaitSeconds = 20;
-					int seconds = 0;
-					while (!this.isTestResultForUploadAttachmentsReady && seconds < maxWaitSeconds) {
-						try {
-							seconds++;
-							TimeUnit.SECONDS.sleep(1);
-						} catch (InterruptedException e) {
-							frameworkLogger.error("Ops!", e);
-						}
-					}
+					initializationLatch.await();
 
 					frameworkLogger.info("Uploading attachment: " + filePath);
 					Attachment attachment =
