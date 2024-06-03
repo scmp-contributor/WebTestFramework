@@ -104,7 +104,14 @@ public class TestRailDataService {
 		taskExecuterService.shutdown();
 		// Wait for pending tasks to complete
 		try {
-			boolean terminated = taskExecuterService.awaitTermination(20, TimeUnit.SECONDS);
+			boolean terminated = taskExecuterService.awaitTermination(30, TimeUnit.SECONDS);
+			if (!terminated) {
+				// Timeout occurred before all tasks completed
+				frameworkLogger.warn("Timeout occurred. Not all tasks completed.");
+			} else {
+				// All tasks completed within the timeout duration
+				frameworkLogger.info("All tasks completed.");
+			}
 		} catch (InterruptedException e) {
 			frameworkLogger.error("Ops!", e);
 		}

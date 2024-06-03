@@ -41,7 +41,9 @@ public class GoogleAnalytics4 extends AbstractTrackingData {
     public String getEventData(String key) {
 
         if(parameters != null){
-            return parameters.get(GoogleAnalytics4Parameter.EVENT_DATA + "." + key) != null? parameters.get(GoogleAnalytics4Parameter.EVENT_DATA + "." + key): null;
+            return parameters.get(GoogleAnalytics4Parameter.EVENT_DATA + "." + key) != null?
+                    parameters.get(GoogleAnalytics4Parameter.EVENT_DATA + "." + key)
+                    :null;
         }else{
             return this.getValue(GoogleAnalytics4Parameter.EVENT_DATA + "." + key);
         }
@@ -83,7 +85,8 @@ public class GoogleAnalytics4 extends AbstractTrackingData {
 
             if(that.parameters.size() == this.parameters.size()){
                 this.parameters.keySet().forEach(key -> {
-                    if(!that.parameters.containsKey(key) && !that.parameters.get(key).equals(this.parameters.get(key))){
+                    if(!that.parameters.containsKey(key)
+                            && !that.parameters.get(key).equals(this.parameters.get(key))){
                         isParametersEqual.set(false);
                     }
                 });
