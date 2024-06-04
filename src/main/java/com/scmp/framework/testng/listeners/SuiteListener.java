@@ -2,6 +2,7 @@ package com.scmp.framework.testng.listeners;
 
 import com.scmp.framework.annotations.testrail.TestRailTestCase;
 import com.scmp.framework.context.ApplicationContextProvider;
+import com.scmp.framework.context.FrameworkConfigs;
 import com.scmp.framework.context.RunTimeContext;
 import com.scmp.framework.testrail.TestRailManager;
 import com.scmp.framework.testrail.models.TestRun;
@@ -29,6 +30,7 @@ public class SuiteListener implements ISuiteListener {
 
 	private static final Logger frameworkLogger = LoggerFactory.getLogger(SuiteListener.class);
 	private final RunTimeContext runTimeContext;
+	private final FrameworkConfigs frameworkConfigs;
 	private final TestRailManager testRailManager;
 
 	public SuiteListener() {
@@ -37,6 +39,7 @@ public class SuiteListener implements ISuiteListener {
 		ApplicationContext context = ApplicationContextProvider.getApplicationContext();
 		runTimeContext = context.getBean(RunTimeContext.class);
 		testRailManager = context.getBean(TestRailManager.class);
+		frameworkConfigs = context.getBean(FrameworkConfigs.class);
 	}
 
 	@Override
@@ -47,11 +50,11 @@ public class SuiteListener implements ISuiteListener {
 	@Override
 	public void onStart(ISuite suite) {
 
-		if (runTimeContext.getFrameworkConfigs().isTestRailUploadTestResult()) {
+		if (frameworkConfigs.isTestRailUploadTestResult()) {
 			try {
 				createTestRun(suite);
 			} catch (Exception e) {
-				String errorMessage = "Fail to init and create Test Run in TestRail.";
+				String errorMessage = "Failed to create Test Run in TestRail.";
 				frameworkLogger.error(errorMessage, e);
 				throw new RuntimeException(errorMessage);
 			}
@@ -82,7 +85,7 @@ public class SuiteListener implements ISuiteListener {
 	private void createTestRun(ISuite suite) throws IOException {
 		frameworkLogger.info("Creating Test Run in TestRail...");
 
-		String projectId = runTimeContext.getFrameworkConfigs().getTestRailProjectId();
+		String projectId = frameworkConfigs.getTestRailProjectId();
 
 		if (projectId==null || !Pattern.compile("[0-9]+").matcher(projectId).matches()) {
 			throw new IllegalArgumentException(
@@ -91,7 +94,7 @@ public class SuiteListener implements ISuiteListener {
 
 		LocalDate today = LocalDate.now(runTimeContext.getZoneId());
 		String timestamp = String.valueOf(today.minusDays(7).atStartOfDay(runTimeContext.getZoneId()).toEpochSecond());
-		String testRunName = runTimeContext.getFrameworkConfigs().getTestRailTestRunName();
+		String testRunName = frameworkConfigs.getTestRailTestRunName();
 
 		if (testRunName.isEmpty()) {
 			// Default Test Run Name
@@ -100,7 +103,7 @@ public class SuiteListener implements ISuiteListener {
 
 		final String finalTestRunName = testRunName.trim();
 
-		if (!runTimeContext.getFrameworkConfigs().isTestRailCreateNewTestRun()) {
+		if (!frameworkConfigs.isTestRailCreateNewTestRun()) {
 			TestRunResult testRunResult = testRailManager.getTestRuns(projectId, timestamp);
 			Optional<TestRun> existingTestRun =
 					testRunResult.getTestRunList().stream()
@@ -116,8 +119,7 @@ public class SuiteListener implements ISuiteListener {
 						existingTestRunData.getName());
 				runTimeContext.setGlobalVariables(TEST_RUN_OBJECT, existingTestRunData);
 
-				String statusFilter = runTimeContext.getFrameworkConfigs()
-						.getTestRailTestStatusFilter().replace(" ", "");
+				String statusFilter = frameworkConfigs.getTestRailTestStatusFilter().replace(" ", "");
 
 				List<TestRunTest> matchedTests =
 						testRailManager.getAllTestRunTests(existingTestRunData.getId(), statusFilter);
@@ -130,7 +132,7 @@ public class SuiteListener implements ISuiteListener {
 		// Create a new test run
 		// Look up test case ids
 		List<Integer> testCaseIdList;
-		if (runTimeContext.getFrameworkConfigs().isTestRailIncludeAllAutomatedTestCases()) {
+		if (frameworkConfigs.isTestRailIncludeAllAutomatedTestCases()) {
 			List<TestRunTest> testCaseList = testRailManager.getAllAutomatedTestCases(projectId);
 			testCaseIdList = testCaseList.stream().map(TestRunTest::getId).collect(Collectors.toList());
 		} else {

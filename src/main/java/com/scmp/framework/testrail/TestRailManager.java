@@ -25,11 +25,20 @@ import java.util.regex.Pattern;
 @Component
 public class TestRailManager {
 	private static final Logger frameworkLogger = LoggerFactory.getLogger(TestRailManager.class);
-	private final Retrofit retrofit;
-
+	private Retrofit retrofit;
 	@Autowired
-	public TestRailManager(FrameworkConfigs configs) {
+	private FrameworkConfigs configs;
 
+	public TestRailManager() {
+		if (configs.isTestRailUploadTestResult()) {
+			this.init();
+		}
+	}
+
+	/**
+	 * Build TestRail connection
+	 */
+	public void init() {
 		frameworkLogger.info("Initializing TestRailManager...");
 
 		String baseUrl = configs.getTestRailServer();
