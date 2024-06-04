@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -21,12 +22,13 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+@Component
 public class TestRailManager {
 	private static final Logger frameworkLogger = LoggerFactory.getLogger(TestRailManager.class);
 	private final Retrofit retrofit;
 
 	@Autowired
-	private TestRailManager(FrameworkConfigs configs) {
+	public TestRailManager(FrameworkConfigs configs) {
 
 		frameworkLogger.info("Initializing TestRailManager...");
 

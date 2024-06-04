@@ -1,5 +1,6 @@
 package com.scmp.framework.testrail;
 
+import com.scmp.framework.context.ApplicationContextProvider;
 import com.scmp.framework.testrail.models.Attachment;
 import com.scmp.framework.testrail.models.CustomStepResult;
 import com.scmp.framework.testrail.models.TestResult;
@@ -7,7 +8,7 @@ import com.scmp.framework.testrail.models.TestRun;
 import com.scmp.framework.testrail.models.requests.AddTestResultRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ public class TestRailDataService {
 	private final List<CustomStepResult> testRailCustomStepResultList = new ArrayList<>();
 	private final ExecutorService taskExecuterService = Executors.newFixedThreadPool(5);
 	private final CountDownLatch initializationLatch = new CountDownLatch(1);
-	@Autowired
+
 	private TestRailManager testRailManager;
 
 	public TestRailDataService(int testcaseId, TestRun testRun) {
@@ -36,6 +37,9 @@ public class TestRailDataService {
 	}
 
 	private void initTestResultForUploadAttachments() {
+
+		ApplicationContext context = ApplicationContextProvider.getApplicationContext();
+		this.testRailManager = context.getBean(TestRailManager.class);
 
 		this.taskExecuterService.submit(() -> {
 			// Create a new test result for adding attachment
@@ -97,7 +101,7 @@ public class TestRailDataService {
 		taskExecuterService.shutdown();
 		// Wait for pending tasks to complete
 		try {
-			boolean terminated = taskExecuterService.awaitTermination(30, TimeUnit.SECONDS);
+			boolean terminated = taskExecuterService.awaitTermination(60, TimeUnit.SECONDS);
 			if (!terminated) {
 				// Timeout occurred before all tasks completed
 				frameworkLogger.warn("Timeout occurred. Not all tasks completed.");
