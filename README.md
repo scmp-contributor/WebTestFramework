@@ -131,7 +131,7 @@ TestLogger logger = new TestLogger();
 | `String captureScreen()`         | Returning the file path of the screenshot              |
 
 ## Changelog
-*4.3.9*
+*4.3.10*
 - **[Enhancement]**
   - Optimize threading logic for TestRail integration
   
@@ -142,9 +142,10 @@ TestLogger logger = new TestLogger();
 *4.3.7*
 - **[Enhancement]**
   - Added GA4 tracking needed model
-  - Update web driver manager to 5.6.4
+- **[Dependency Update]**
+  - Upgraded `io.github.bonigarcia.webdrivermanager` 5.6.4
 
-*4.3.5*
+*4.3.6*
 - **[Bug Fix]**
   - Added back groovy-xml for RestAssured
 
