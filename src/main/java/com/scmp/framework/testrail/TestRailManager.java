@@ -26,11 +26,12 @@ import java.util.regex.Pattern;
 public class TestRailManager {
 	private static final Logger frameworkLogger = LoggerFactory.getLogger(TestRailManager.class);
 	private Retrofit retrofit;
-	@Autowired
-	private FrameworkConfigs configs;
+	private final FrameworkConfigs configs;
 
-	public TestRailManager() {
-		if (configs.isTestRailUploadTestResult()) {
+	@Autowired
+	public TestRailManager(FrameworkConfigs configs) {
+		this.configs = configs;
+		if (this.configs.isTestRailUploadTestResult()) {
 			this.init();
 		}
 	}
