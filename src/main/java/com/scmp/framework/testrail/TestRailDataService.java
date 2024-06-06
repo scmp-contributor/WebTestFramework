@@ -27,7 +27,6 @@ public class TestRailDataService {
 	private final List<CustomStepResult> testRailCustomStepResultList = new ArrayList<>();
 	private final ExecutorService taskExecuterService = Executors.newFixedThreadPool(5);
 	private final CountDownLatch initializationLatch = new CountDownLatch(1);
-
 	private TestRailManager testRailManager;
 
 	public TestRailDataService(int testcaseId, TestRun testRun) {
@@ -37,7 +36,6 @@ public class TestRailDataService {
 	}
 
 	private void initTestResultForUploadAttachments() {
-
 		ApplicationContext context = ApplicationContextProvider.getApplicationContext();
 		this.testRailManager = context.getBean(TestRailManager.class);
 
