@@ -1,5 +1,6 @@
 package com.scmp.framework.context;
 
+import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,16 +25,14 @@ public class RunTimeContext {
 	private final ConcurrentHashMap<String, Object> globalVariables = new ConcurrentHashMap<>();
 	private static final Logger frameworkLogger = LoggerFactory.getLogger(RunTimeContext.class);
 	private final Environment env;
+
+	@Getter
 	private final FrameworkConfigs frameworkConfigs;
 
 	@Autowired
 	public RunTimeContext(Environment env, FrameworkConfigs frameworkConfigs) {
 		this.env = env;
 		this.frameworkConfigs = frameworkConfigs;
-	}
-
-	public FrameworkConfigs getFrameworkConfigs() {
-		return this.frameworkConfigs;
 	}
 
 	public static String currentDateAndTime() {

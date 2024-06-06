@@ -1,5 +1,6 @@
 package com.scmp.framework.testrail;
 
+import com.scmp.framework.context.ApplicationContextProvider;
 import com.scmp.framework.testrail.models.Attachment;
 import com.scmp.framework.testrail.models.CustomStepResult;
 import com.scmp.framework.testrail.models.TestResult;
@@ -7,11 +8,14 @@ import com.scmp.framework.testrail.models.TestRun;
 import com.scmp.framework.testrail.models.requests.AddTestResultRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class TestRailDataService {
@@ -19,36 +23,37 @@ public class TestRailDataService {
 
 	private final int testcaseId;
 	private final TestRun testRun;
-	private boolean isTestResultForUploadAttachmentsReady = false;
 	private TestResult testResultForUploadAttachments;
 	private final List<CustomStepResult> testRailCustomStepResultList = new ArrayList<>();
-	private final ConcurrentLinkedQueue<CustomStepResult> pendingTaskQueue = new ConcurrentLinkedQueue<>();
+	private final ExecutorService taskExecuterService = Executors.newFixedThreadPool(5);
+	private final CountDownLatch initializationLatch = new CountDownLatch(1);
+	private TestRailManager testRailManager;
 
 	public TestRailDataService(int testcaseId, TestRun testRun) {
 		this.testcaseId = testcaseId;
 		this.testRun = testRun;
-
 		this.initTestResultForUploadAttachments();
 	}
 
 	private void initTestResultForUploadAttachments() {
-		new Thread(
-				() -> {
-					// Create a new test result for adding attachment
-					String comment = "Mark In Progress Status";
-					AddTestResultRequest request =
-							new AddTestResultRequest(TestRailStatus.IN_PROGRESS, comment, "", new ArrayList<>());
-					try {
-						this.testResultForUploadAttachments =
-								TestRailManager.getInstance()
-										.addTestResult(this.testRun.getId(), this.testcaseId, request);
+		ApplicationContext context = ApplicationContextProvider.getApplicationContext();
+		this.testRailManager = context.getBean(TestRailManager.class);
 
-						this.isTestResultForUploadAttachmentsReady = true;
-					} catch (IOException e) {
-						frameworkLogger.error("Failed to create test result.", e);
-					}
-				})
-				.start();
+		this.taskExecuterService.submit(() -> {
+			// Create a new test result for adding attachment
+			String comment = "Mark In Progress Status";
+			AddTestResultRequest request =
+					new AddTestResultRequest(TestRailStatus.IN_PROGRESS, comment, "", new ArrayList<>());
+			try {
+				this.testResultForUploadAttachments =
+						testRailManager.addTestResult(this.testRun.getId(), this.testcaseId, request);
+
+				// Signal that initialization is complete
+				initializationLatch.countDown();
+			} catch (IOException e) {
+				frameworkLogger.error("Failed to create test result.", e);
+			}
+		});
 	}
 
 	/**
@@ -63,42 +68,23 @@ public class TestRailDataService {
 		testRailCustomStepResultList.add(stepResult);
 
 		if (filePath!=null) {
-			pendingTaskQueue.add(stepResult);
+			this.taskExecuterService.submit(() -> {
+				try {
+					// Wait for test result for attachment ready
+					initializationLatch.await();
 
-			Thread updateStepWithAttachment =
-					new Thread(
-							() -> {
-								try {
-									// Wait for test result for attachment ready
-									int maxWaitSeconds = 20;
-									int seconds = 0;
-									while (!this.isTestResultForUploadAttachmentsReady && seconds < maxWaitSeconds) {
-										try {
-											seconds++;
-											TimeUnit.SECONDS.sleep(1);
-										} catch (InterruptedException e) {
-											frameworkLogger.error("Ops!", e);
-										}
-									}
+					frameworkLogger.info("Uploading attachment: " + filePath);
+					Attachment attachment =
+							testRailManager.addAttachmentToTestResult(testResultForUploadAttachments.getId(), filePath);
 
-									frameworkLogger.info("Uploading attachment: " + filePath);
-									Attachment attachment =
-											TestRailManager.getInstance()
-													.addAttachmentToTestResult(
-															testResultForUploadAttachments.getId(), filePath);
-
-									String attachmentRef =
-											String.format(Attachment.ATTACHMENT_REF_STRING, attachment.getAttachmentId());
-									frameworkLogger.info("Attachment uploaded: " + attachmentRef);
-									stepResult.setContent(stepResult.getContent() + " \n " + attachmentRef);
-								} catch (Exception e) {
-									frameworkLogger.error("Failed to upload attachment.", e);
-								} finally {
-									pendingTaskQueue.remove(stepResult);
-								}
-							});
-
-			updateStepWithAttachment.start();
+					String attachmentRef =
+							String.format(Attachment.ATTACHMENT_REF_STRING, attachment.getAttachmentId());
+					frameworkLogger.info("Attachment uploaded: " + attachmentRef);
+					stepResult.setContent(stepResult.getContent() + " \n " + attachmentRef);
+				} catch (Exception e) {
+					frameworkLogger.error("Failed to upload attachment.", e);
+				}
+			});
 		}
 	}
 
@@ -109,16 +95,20 @@ public class TestRailDataService {
 	 * @param elapsedInSecond
 	 */
 	public void uploadDataToTestRail(int finalTestResult, long elapsedInSecond) {
+		// Shut down the ExecutorService to reject new tasks
+		taskExecuterService.shutdown();
 		// Wait for pending tasks to complete
-		int maxWaitSeconds = 20;
-		int seconds = 0;
-		while (pendingTaskQueue.size() > 0 && seconds < maxWaitSeconds) {
-			try {
-				seconds++;
-				TimeUnit.SECONDS.sleep(1);
-			} catch (InterruptedException e) {
-				frameworkLogger.error("Ops!", e);
+		try {
+			boolean terminated = taskExecuterService.awaitTermination(60, TimeUnit.SECONDS);
+			if (!terminated) {
+				// Timeout occurred before all tasks completed
+				frameworkLogger.warn("Timeout occurred. Not all tasks completed.");
+			} else {
+				// All tasks completed within the timeout duration
+				frameworkLogger.info("All tasks completed.");
 			}
+		} catch (InterruptedException e) {
+			frameworkLogger.error("Ops!", e);
 		}
 
 //    frameworkLogger.info("========RESULT CONTENT==========");
@@ -129,7 +119,7 @@ public class TestRailDataService {
 				new AddTestResultRequest(
 						finalTestResult, "", elapsedInSecond + "s", testRailCustomStepResultList);
 		try {
-			TestRailManager.getInstance().addTestResult(this.testRun.getId(), this.testcaseId, request);
+			testRailManager.addTestResult(this.testRun.getId(), this.testcaseId, request);
 		} catch (IOException e) {
 			frameworkLogger.error("Failed to create test result.", e);
 		}

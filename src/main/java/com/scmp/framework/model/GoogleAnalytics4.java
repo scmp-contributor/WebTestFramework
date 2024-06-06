@@ -83,7 +83,8 @@ public class GoogleAnalytics4 extends AbstractTrackingData {
 
             if(that.parameters.size() == this.parameters.size()){
                 this.parameters.keySet().forEach(key -> {
-                    if(!that.parameters.containsKey(key) && !that.parameters.get(key).equals(this.parameters.get(key))){
+                    if(!that.parameters.containsKey(key)
+                            && !that.parameters.get(key).equals(this.parameters.get(key))){
                         isParametersEqual.set(false);
                     }
                 });

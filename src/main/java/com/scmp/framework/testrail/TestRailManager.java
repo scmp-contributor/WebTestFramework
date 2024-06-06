@@ -1,5 +1,6 @@
 package com.scmp.framework.testrail;
 
+import com.scmp.framework.context.FrameworkConfigs;
 import com.scmp.framework.testrail.models.*;
 import com.scmp.framework.testrail.models.requests.AddTestResultRequest;
 import com.scmp.framework.testrail.models.requests.AddTestRunRequest;
@@ -7,6 +8,8 @@ import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -17,13 +20,31 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
+@Component
 public class TestRailManager {
 	private static final Logger frameworkLogger = LoggerFactory.getLogger(TestRailManager.class);
-	private static TestRailManager instance;
-	private final Retrofit retrofit;
+	private Retrofit retrofit;
+	private final FrameworkConfigs configs;
 
-	public static synchronized void init(String baseUrl, String userName, String apiKey) {
+	@Autowired
+	public TestRailManager(FrameworkConfigs configs) {
+		this.configs = configs;
+		if (this.configs.isTestRailUploadTestResult()) {
+			this.init();
+		}
+	}
+
+	/**
+	 * Build TestRail connection
+	 */
+	public void init() {
+		frameworkLogger.info("Initializing TestRailManager...");
+
+		String baseUrl = configs.getTestRailServer();
+		String userName = configs.getTestRailUserName();
+		String apiKey = configs.getTestRailAPIKey();
 
 		if (baseUrl==null
 				|| baseUrl.isEmpty()
@@ -36,15 +57,6 @@ public class TestRailManager {
 							"IllegalArgument found: BaseUrl=[%s], UserName=[%s], APIKey=[%s]",
 							baseUrl, userName, apiKey));
 		}
-
-		instance = new TestRailManager(baseUrl, userName, apiKey);
-	}
-
-	public static TestRailManager getInstance() {
-		return instance;
-	}
-
-	private TestRailManager(String baseUrl, String userName, String apiKey) {
 
 		if (!baseUrl.endsWith("/")) {
 			baseUrl += "/";
@@ -62,6 +74,16 @@ public class TestRailManager {
 						.client(client)
 						.addConverterFactory(GsonConverterFactory.create())
 						.build();
+
+		String inProgressId = configs.getTestRailStatusInProgressId();
+		if (inProgressId!=null && Pattern.compile("[0-9]+").matcher(inProgressId).matches()) {
+			TestRailStatus.IN_PROGRESS = Integer.parseInt(inProgressId);
+		} else {
+			// Default use TestRailStatus.Retest for TestRailStatus.IN_PROGRESS
+			TestRailStatus.IN_PROGRESS = TestRailStatus.Retest;
+		}
+
+		frameworkLogger.info("TestRailManager Initialized.");
 	}
 
 	public TestRunResult getTestRuns(String projectId, String timestamp) throws IOException {
@@ -112,7 +134,7 @@ public class TestRailManager {
 		boolean withNextPage = true;
 		while (withNextPage) {
 			TestCaseResult result = this.getAutomatedTestCases(projectId, offset);
-			if (result.getTestRunTestList().size() > 0) {
+			if (!result.getTestRunTestList().isEmpty()) {
 				allResults.addAll(result.getTestRunTestList());
 			}
 
@@ -194,7 +216,7 @@ public class TestRailManager {
 		boolean withNextPage = true;
 		while (withNextPage) {
 			TestRunTestResult result = this.getTestRunTests(testRunId, statusFilterString, offset);
-			if (result.getTestRunTestList().size() > 0) {
+			if (!result.getTestRunTestList().isEmpty()) {
 				allResults.addAll(result.getTestRunTestList());
 			}
 
@@ -215,7 +237,7 @@ public class TestRailManager {
 		}
 
 		AddTestRunRequest request =
-				new AddTestRunRequest(testRunName, includeTestCaseIds.size()==0, includeTestCaseIds);
+				new AddTestRunRequest(testRunName, includeTestCaseIds.isEmpty(), includeTestCaseIds);
 
 		String CustomQuery = String.format(TestRailService.ADD_TEST_RUN_API, projectId);
 		TestRailService service = retrofit.create(TestRailService.class);

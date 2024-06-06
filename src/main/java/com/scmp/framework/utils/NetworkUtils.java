@@ -24,8 +24,7 @@ public class NetworkUtils {
 		List<String> messages = new ArrayList<>();
 
 		LogEntries logs = driver.manage().logs().get("performance");
-		for (Iterator<LogEntry> it = logs.iterator(); it.hasNext(); ) {
-			LogEntry entry = it.next();
+		for (LogEntry entry : logs) {
 			messages.add(entry.getMessage());
 		}
 
@@ -98,12 +97,8 @@ public class NetworkUtils {
 										GoogleAnalytics4 ga4Data = new GoogleAnalytics4(url, events[i]);
 										String en = ga4Data.getEventName();
 
-										List<GoogleAnalytics4> ga4Datas = trackingData.get(en);
-
-										if(ga4Datas == null){
-											ga4Datas = new ArrayList<>();
-											trackingData.put(en, ga4Datas);
-										}
+										List<GoogleAnalytics4> ga4Datas =
+												trackingData.computeIfAbsent(en, k -> new ArrayList<>());
 
 										ga4Datas.add(ga4Data);
 									}
@@ -112,12 +107,8 @@ public class NetworkUtils {
 									GoogleAnalytics4 event = new GoogleAnalytics4(url);
 									String en = event.getEventName();
 
-									List<GoogleAnalytics4> ga4Datas = trackingData.get(en);
-
-									if(ga4Datas == null){
-										ga4Datas = new ArrayList<>();
-										trackingData.put(en, ga4Datas);
-									}
+									List<GoogleAnalytics4> ga4Datas =
+											trackingData.computeIfAbsent(en, k -> new ArrayList<>());
 
 									ga4Datas.add(event);
 								}

@@ -13,6 +13,7 @@ import com.scmp.framework.testrail.TestRailStatus;
 import com.scmp.framework.testrail.models.TestRun;
 import com.scmp.framework.testrail.models.TestRunTest;
 import com.scmp.framework.utils.ConfigFileReader;
+import lombok.Getter;
 import net.lightbody.bmp.BrowserMobProxy;
 import net.lightbody.bmp.client.ClientUtil;
 import org.openqa.selenium.Dimension;
@@ -43,6 +44,7 @@ import static com.scmp.framework.utils.Constants.TEST_RUN_OBJECT;
 
 public class TestInfo {
 	private final IInvokedMethod testNGInvokedMethod;
+	@Getter
 	private final ITestResult testResult;
 	private final Method declaredMethod;
 	private Browser browserType = null;
@@ -102,10 +104,6 @@ public class TestInfo {
 			long elapsed = Duration.between(this.testStartTime, this.testEndTime).getSeconds();
 			this.testRailDataService.uploadDataToTestRail(finalTestResult, elapsed);
 		}
-	}
-
-	public ITestResult getTestResult() {
-		return this.testResult;
 	}
 
 	public String getClassName() {

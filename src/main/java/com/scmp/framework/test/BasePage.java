@@ -3,6 +3,7 @@ package com.scmp.framework.test;
 import com.scmp.framework.testng.model.TestInfo;
 import com.scmp.framework.utils.HTMLTags;
 import com.scmp.framework.utils.NetworkUtils;
+import lombok.Getter;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.html5.LocalStorage;
@@ -17,6 +18,7 @@ import static com.scmp.framework.utils.Constants.TEST_INFO_OBJECT;
 
 public abstract class BasePage extends BasePageElement {
 
+	@Getter
 	private final RemoteWebDriver driver;
 	private String viewSelector;
 	private int screenHeight = -1;
@@ -75,10 +77,6 @@ public abstract class BasePage extends BasePageElement {
 			return url.substring(0, url.length() - 1);
 		}
 		return url;
-	}
-
-	public RemoteWebDriver getDriver() {
-		return this.driver;
 	}
 
 	public abstract boolean waitForPageLoad();
