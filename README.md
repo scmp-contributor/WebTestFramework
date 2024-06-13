@@ -131,6 +131,10 @@ TestLogger logger = new TestLogger();
 | `String captureScreen()`         | Returning the file path of the screenshot              |
 
 ## Changelog
+*4.3.11*
+- **[Bug Fix]**
+  - Fixed GA4 hasPostData checking
+
 *4.3.10*
 - **[Enhancement]**
   - Optimize threading logic for TestRail integration
