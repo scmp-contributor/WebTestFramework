@@ -83,7 +83,7 @@ public class NetworkUtils {
 
 						Matcher matcher = regex.matcher(url);
 						if (matcher.matches()) {
-							boolean hasPostData = request.has("hasPostData")  && (Boolean) request.get("hasPostData");
+							boolean hasPostData = request.optBoolean("hasPostData", false);
 
 							try{
 								if(hasPostData && request.has("postData")){
