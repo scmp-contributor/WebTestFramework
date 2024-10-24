@@ -16,7 +16,6 @@ import java.lang.reflect.Method;
 
 import static com.scmp.framework.utils.Constants.TEST_INFO_OBJECT;
 
-
 public final class InvokedMethodListener implements IInvokedMethodListener {
 	private static final Logger frameworkLogger = LoggerFactory.getLogger(InvokedMethodListener.class);
 
@@ -37,7 +36,6 @@ public final class InvokedMethodListener implements IInvokedMethodListener {
 	 */
 	@Override
 	public void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
-
 		// Clear all runtime variables
 		runTimeContext.clearRunTimeVariables();
 
@@ -51,14 +49,14 @@ public final class InvokedMethodListener implements IInvokedMethodListener {
 			throw new SkipException("Skipped Test - " + testInfo.getTestName());
 		}
 
-		frameworkLogger.info("Start running test [" + testInfo.getMethodName() + "]");
+		frameworkLogger.info("Start running test [{}]", testInfo.getMethodName());
 		try {
 			if (testInfo.needLaunchBrowser()) {
 				setupDriverForTest(testInfo);
 			}
 			setupReporterForTest(testInfo);
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			frameworkLogger.error("Failed to setup test driver.", ex);
 			reportService.setSetupStatus(false);
 			Assert.fail("Fails to setup test driver.");
 		}
@@ -70,9 +68,8 @@ public final class InvokedMethodListener implements IInvokedMethodListener {
 	 */
 	@Override
 	public void afterInvocation(IInvokedMethod method, ITestResult testResult) {
-
 		TestInfo testInfo = (TestInfo) runTimeContext.getTestLevelVariables(TEST_INFO_OBJECT);
-		// Skip beforeInvocation if current method is not with Annotation Test, or
+		// Skip afterInvocation if current method is not with Annotation Test, or
 		// Current Test need to be skipped
 		if (!testInfo.isTestMethod() || testInfo.isSkippedTest()) {
 			return;
@@ -81,14 +78,13 @@ public final class InvokedMethodListener implements IInvokedMethodListener {
 		Method refMethod = method.getTestMethod().getConstructorOrMethod().getMethod();
 		String methodName = refMethod.getName();
 
-		frameworkLogger.info("Completed running test [" + methodName + "]");
+		frameworkLogger.info("Completed running test [{}]", methodName);
 
 		// If fails to set up test
 		if (!reportService.getSetupStatus()) {
 			if (testInfo.needLaunchBrowser()) {
 				webDriverService.stopWebDriver();
 			}
-
 			return;
 		}
 
@@ -102,7 +98,7 @@ public final class InvokedMethodListener implements IInvokedMethodListener {
 				webDriverService.stopWebDriver();
 			}
 		} catch (Exception e) {
-			frameworkLogger.error("Ops!", e);
+			frameworkLogger.error("Error during afterInvocation", e);
 		}
 	}
 
@@ -121,7 +117,7 @@ public final class InvokedMethodListener implements IInvokedMethodListener {
 			reportService.setTestInfo(testInfo);
 			reportService.setSetupStatus(true);
 		} catch (Exception e) {
-			frameworkLogger.error("Ops!", e);
+			frameworkLogger.error("Error setting up reporter for test", e);
 		}
 	}
 
@@ -132,7 +128,6 @@ public final class InvokedMethodListener implements IInvokedMethodListener {
 	 * @throws Exception exception for starting driver instance
 	 */
 	private void setupDriverForTest(TestInfo testInfo) throws Exception {
-
 		MutableCapabilities browserOptions = testInfo.getBrowserOption();
 		Dimension deviceDimension = testInfo.getDeviceDimension();
 
