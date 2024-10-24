@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class ExtentTestService {
 	private static final Logger frameworkLogger = LoggerFactory.getLogger(ExtentTestService.class);
+
 	private final ConcurrentHashMap<String, ExtentTest> extentReportMap = new ConcurrentHashMap<>();
 	private final ExtentManager extentManager;
 
@@ -20,14 +21,14 @@ public class ExtentTestService {
 	}
 
 	/**
-	 * Push all updates to report
+	 * Push all updates to the report.
 	 */
 	public void flush() {
 		extentManager.getExtent().flush();
 	}
 
 	/**
-	 * Remove the extent test record if previous run fails
+	 * Remove the extent test record if the previous run fails.
 	 *
 	 * @param test extent test record to be removed
 	 */
@@ -36,21 +37,20 @@ public class ExtentTestService {
 	}
 
 	/**
-	 * Create extent report record by test name and description
+	 * Create or reuse an extent report record by test name and description.
 	 *
 	 * @param name        test name
 	 * @param description test description
-	 * @return extend record
+	 * @return extent test record
 	 */
 	public synchronized ExtentTest createTest(String name, String description) {
 		ExtentTest test;
 
 		if (extentReportMap.containsKey(name)) {
-			frameworkLogger.info("Reuse Test Thread ID: " + Thread.currentThread().getId() + ", Key: " + name);
+			frameworkLogger.info("Reuse Test Thread ID: {}, Key: {}", Thread.currentThread().getId(), name);
 			test = extentReportMap.get(name);
 		} else {
-			frameworkLogger.info(
-					"Create new Test Thread ID: " + Thread.currentThread().getId() + ", Key: " + name);
+			frameworkLogger.info("Create new Test Thread ID: {}, Key: {}", Thread.currentThread().getId(), name);
 			test = extentManager.getExtent().createTest(name, description);
 			extentReportMap.put(name, test);
 		}
