@@ -1,3 +1,4 @@
+// src/main/java/com/scmp/framework/services/ReportService.java
 package com.scmp.framework.services;
 
 import com.aventstack.extentreports.ExtentTest;
@@ -43,10 +44,16 @@ public class ReportService {
 		this.extentTestService = extentTestService;
 	}
 
+	/**
+	 * Remove the current test from the report.
+	 */
 	public void removeTest() {
 		extentTestService.removeTest(currentTestMethod.get());
 	}
 
+	/**
+	 * Mark the current test as skipped.
+	 */
 	public void skipTest() {
 		currentTestMethod.get().getModel().setStatus(Status.SKIP);
 	}
@@ -59,11 +66,10 @@ public class ReportService {
 	 * @param result TestNG test result
 	 */
 	private void handleTestFailure(ITestResult result) {
-
-		if (result.getStatus()==ITestResult.FAILURE) {
+		if (result.getStatus() == ITestResult.FAILURE) {
 			// Print exception stack trace if any
 			Throwable throwable = result.getThrowable();
-			if (throwable!=null) {
+			if (throwable != null) {
 				frameworkLogger.error("Ops!", throwable);
 				currentTestMethod.get().log(Status.FAIL, "<pre>" + result.getThrowable().getMessage() + "</pre>");
 				this.addTestRailLog(TestRailStatus.Failed, result.getThrowable().getMessage(), null);
@@ -87,43 +93,44 @@ public class ReportService {
 		}
 	}
 
+	/**
+	 * End logging test results and handle retries if necessary.
+	 *
+	 * @param result TestNG test result
+	 */
 	public void endLogTestResults(ITestResult result) {
-
 		this.testInfo.get().setTestEndTime();
 		if (result.isSuccess()) {
 			String message = "Test Passed: " + result.getMethod().getMethodName();
 			currentTestMethod.get().log(Status.PASS, message);
 			this.addTestRailLog(TestRailStatus.Passed, message, null);
-
 		} else {
-			if (result.getStatus()==ITestResult.FAILURE) {
+			if (result.getStatus() == ITestResult.FAILURE) {
 				handleTestFailure(result);
 			}
 		}
 
-		if (result.getStatus()==ITestResult.SKIP) {
+		if (result.getStatus() == ITestResult.SKIP) {
 			currentTestMethod.get().log(Status.SKIP, "Test skipped");
 		}
 
 		extentTestService.flush();
 
-
 		// Handling for Retry
 		IRetryAnalyzer analyzer = result.getMethod().getRetryAnalyzer();
 		if (analyzer instanceof RetryAnalyzer) {
-			if (((RetryAnalyzer) analyzer).isRetriedMethod(result) ||
-					result.getStatus()==ITestResult.FAILURE) {
+			if (((RetryAnalyzer) analyzer).isRetriedMethod(result) || result.getStatus() == ITestResult.FAILURE) {
 				this.addTag("RETRIED");
 			}
 
 			if (runTimeContext.getFrameworkConfigs().isRemoveFailedTestB4Retry()
-					&& result.getStatus()==ITestResult.FAILURE
+					&& result.getStatus() == ITestResult.FAILURE
 					&& ((RetryAnalyzer) analyzer).isRetriedRequired(result)) {
 				this.removeTest();
 			}
 		}
 
-		if (result.getStatus()==ITestResult.SKIP) {
+		if (result.getStatus() == ITestResult.SKIP) {
 			this.skipTest();
 		}
 
@@ -132,37 +139,60 @@ public class ReportService {
 		this.testInfo.get().uploadTestResultsToTestRail();
 	}
 
+	/**
+	 * Set the current test result.
+	 *
+	 * @param testResult TestNG test result
+	 */
 	public void setTestResult(ITestResult testResult) {
 		this.testResult.set(testResult);
 	}
 
+	/**
+	 * Set the setup status.
+	 *
+	 * @param status setup status
+	 */
 	public void setSetupStatus(boolean status) {
 		this.setupStatus.set(status);
 	}
 
+	/**
+	 * Get the setup status.
+	 *
+	 * @return setup status
+	 */
 	public boolean getSetupStatus() {
-		return this.setupStatus.get()!=null && this.setupStatus.get();
+		return this.setupStatus.get() != null && this.setupStatus.get();
 	}
 
+	/**
+	 * Setup the report for a test set.
+	 *
+	 * @param testInfo test information
+	 */
 	public synchronized void setupReportForTestSet(TestInfo testInfo) {
 		ExtentTest parent = extentTestService.createTest(testInfo.getClassName(), testInfo.getClassDescription());
-		if (testInfo.getClassLevelGroups()!=null) {
+		if (testInfo.getClassLevelGroups() != null) {
 			parent.assignCategory(testInfo.getClassLevelGroups());
 		}
 
 		parentTestClass.set(parent);
-
 	}
 
+	/**
+	 * Set the test information for the current test.
+	 *
+	 * @param testInfo test information
+	 */
 	public synchronized void setTestInfo(TestInfo testInfo) {
-
 		this.testInfo.set(testInfo);
 
 		ExtentTest child = parentTestClass.get().createNode(testInfo.getTestName(), testInfo.getTestMethodDescription());
 		currentTestMethod.set(child);
 
 		// Update authors
-		if (testInfo.getAuthorNames()!=null) {
+		if (testInfo.getAuthorNames() != null) {
 			currentTestMethod.get().assignAuthor(testInfo.getAuthorNames());
 		}
 
@@ -172,10 +202,21 @@ public class ReportService {
 		currentTestMethod.get().assignCategory(testInfo.getBrowserType().toString());
 	}
 
+	/**
+	 * Add a tag to the current test.
+	 *
+	 * @param tag tag to add
+	 */
 	public void addTag(String tag) {
 		this.currentTestMethod.get().assignCategory(tag);
 	}
 
+	/**
+	 * Get the image path for a screenshot.
+	 *
+	 * @param imageName name of the image
+	 * @return image path
+	 */
 	public String getImagePath(String imageName) {
 		String[] classAndMethod = getTestClassNameAndMethodName().split(",");
 		try {
@@ -186,15 +227,32 @@ public class ReportService {
 		}
 	}
 
+	/**
+	 * Add a log entry to TestRail.
+	 *
+	 * @param status status of the test
+	 * @param message log message
+	 * @param imagePath path to the image
+	 */
 	private void addTestRailLog(int status, String message, String imagePath) {
 		this.testInfo.get().addTestResultForTestRail(status, message, imagePath);
 	}
 
+	/**
+	 * Log an informational message.
+	 *
+	 * @param message log message
+	 */
 	public void logInfo(String message) {
 		this.currentTestMethod.get().log(Status.INFO, message);
 		this.addTestRailLog(TestRailStatus.Passed, message, null);
 	}
 
+	/**
+	 * Log a screenshot and return its path.
+	 *
+	 * @return path to the screenshot
+	 */
 	public String logScreenshot() {
 		String imagePath = this.logScreenshot(Status.INFO);
 		this.addTestRailLog(TestRailStatus.Passed, "", imagePath);
@@ -202,6 +260,12 @@ public class ReportService {
 		return imagePath;
 	}
 
+	/**
+	 * Log a screenshot with a specific status.
+	 *
+	 * @param status status of the log entry
+	 * @return path to the screenshot
+	 */
 	private String logScreenshot(Status status) {
 		try {
 			String[] classAndMethod = getTestClassNameAndMethodName().split(",");
@@ -218,6 +282,11 @@ public class ReportService {
 		return "";
 	}
 
+	/**
+	 * Log an informational message with a screenshot.
+	 *
+	 * @param message log message
+	 */
 	public void logInfoWithScreenshot(String message) {
 		this.currentTestMethod.get().log(Status.INFO, message);
 		String imagePath = this.logScreenshot();
@@ -225,11 +294,21 @@ public class ReportService {
 		this.addTestRailLog(TestRailStatus.Passed, message, imagePath);
 	}
 
+	/**
+	 * Log a pass message.
+	 *
+	 * @param message log message
+	 */
 	public void logPass(String message) {
 		this.currentTestMethod.get().log(Status.PASS, message);
 		this.addTestRailLog(TestRailStatus.Passed, message, null);
 	}
 
+	/**
+	 * Log a pass message with a screenshot.
+	 *
+	 * @param message log message
+	 */
 	public void logPassWithScreenshot(String message) {
 		this.currentTestMethod.get().log(Status.PASS, message);
 		String imagePath = this.logScreenshot(Status.PASS);
@@ -237,6 +316,11 @@ public class ReportService {
 		this.addTestRailLog(TestRailStatus.Passed, message, imagePath);
 	}
 
+	/**
+	 * Log a fail message.
+	 *
+	 * @param message log message
+	 */
 	public void logFail(String message) {
 		this.testResult.get().setStatus(ITestResult.FAILURE);
 		this.currentTestMethod.get().log(Status.FAIL, message);
@@ -245,6 +329,11 @@ public class ReportService {
 		this.addTestRailLog(TestRailStatus.Failed, message, imagePath);
 	}
 
+	/**
+	 * Log a fail message without a screenshot.
+	 *
+	 * @param message log message
+	 */
 	public void logFailWithoutScreenshot(String message) {
 		this.currentTestMethod.get().log(Status.FAIL, message);
 		this.testResult.get().setStatus(ITestResult.FAILURE);
@@ -252,6 +341,12 @@ public class ReportService {
 		this.addTestRailLog(TestRailStatus.Failed, message, null);
 	}
 
+	/**
+	 * Log a fail message with an image.
+	 *
+	 * @param message log message
+	 * @param originalImagePath path to the image
+	 */
 	public void logFailWithImage(String message, String originalImagePath) {
 		String imageRelativePath = getRelativePathToReport(originalImagePath);
 		try {
@@ -266,6 +361,12 @@ public class ReportService {
 		}
 	}
 
+	/**
+	 * Log a JSON string to a file.
+	 *
+	 * @param json JSON string
+	 * @param fileName name of the file
+	 */
 	public void logJson(String json, String fileName) {
 		StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
 		int classIndex = 0;
@@ -276,7 +377,7 @@ public class ReportService {
 			}
 		}
 		String filePath = runTimeContext.getLogPath("json", stElements[classIndex].getClassName(), stElements[classIndex].getMethodName());
-		if (fileName==null) {
+		if (fileName == null) {
 			filePath = filePath + File.separator + RunTimeContext.currentDateAndTime() + ".json";
 		} else {
 			filePath = filePath + File.separator + fileName + ".json";
@@ -292,6 +393,11 @@ public class ReportService {
 		}
 	}
 
+	/**
+	 * Capture a screenshot and return its path.
+	 *
+	 * @return path to the screenshot
+	 */
 	public String captureScreenShot() {
 		try {
 			String[] classAndMethod = getTestClassNameAndMethodName().split(",");
@@ -303,6 +409,11 @@ public class ReportService {
 		return null;
 	}
 
+	/**
+	 * Attach an image to the current test.
+	 *
+	 * @param imagePath path to the image
+	 */
 	public void attachImage(String imagePath) {
 		try {
 			this.currentTestMethod.get().addScreenCaptureFromPath(imagePath);
@@ -312,12 +423,23 @@ public class ReportService {
 		}
 	}
 
+	/**
+	 * Get the relative path to the report for a given file.
+	 *
+	 * @param file file path
+	 * @return relative path to the report
+	 */
 	public String getRelativePathToReport(String file) {
 		Path path = new File(file).toPath();
 		Path targetPath = new File(TARGET_PATH).toPath();
 		return targetPath.relativize(path).toString();
 	}
 
+	/**
+	 * Get the test class name and method name.
+	 *
+	 * @return test class name and method name
+	 */
 	private String getTestClassNameAndMethodName() {
 		String classAndMethod = "";
 
@@ -328,7 +450,6 @@ public class ReportService {
 
 			if (e.getMethodName().startsWith("test")) {
 				classAndMethod = e.getClassName().substring(e.getClassName().lastIndexOf(".") + 1) + "," + e.getMethodName();
-
 				break;
 			}
 		}
