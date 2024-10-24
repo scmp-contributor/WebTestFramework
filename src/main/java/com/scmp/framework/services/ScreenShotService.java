@@ -94,10 +94,10 @@ public class ScreenShotService {
 	/**
 	 * Copy the screenshot to the target directory.
 	 *
-	 * @param status                   the status of the test (e.g., PASS, FAIL)
-	 * @param scrFile                  the screenshot file
-	 * @param methodName               the name of the test method
-	 * @param className                the name of the test class
+	 * @param status                      the status of the test (e.g., PASS, FAIL)
+	 * @param scrFile                     the screenshot file
+	 * @param methodName                  the name of the test method
+	 * @param className                   the name of the test class
 	 * @param screenShotNameWithTimeStamp the timestamped name of the screenshot
 	 * @return the path to the saved screenshot
 	 */

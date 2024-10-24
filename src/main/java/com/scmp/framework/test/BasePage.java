@@ -2,7 +2,6 @@ package com.scmp.framework.test;
 
 import com.scmp.framework.testng.model.TestInfo;
 import com.scmp.framework.utils.HTMLTags;
-import com.scmp.framework.utils.NetworkUtils;
 import lombok.Getter;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -109,7 +108,7 @@ public abstract class BasePage extends BasePageElement {
 				elementPosition = element.getLocation().getY();
 			}
 
-			if (elementPosition!=-1 && elementPosition < this.getScreenHeight()) {
+			if (elementPosition != -1 && elementPosition < this.getScreenHeight()) {
 				this.scrollDownBy(elementPosition - this.getScreenHeight() / 2);
 
 				// Element on screen
@@ -121,7 +120,7 @@ public abstract class BasePage extends BasePageElement {
 				int scrollTopAfterScoll = this.getScrollTop(this.viewSelector);
 
 				// If reach bottom of the div
-				if (scrollTopB4Scroll==scrollTopAfterScoll) {
+				if (scrollTopB4Scroll == scrollTopAfterScoll) {
 					return false;
 				} else {
 					scrollTopB4Scroll = scrollTopAfterScoll;

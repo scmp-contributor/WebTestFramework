@@ -32,6 +32,7 @@ public class ExtentManager {
 
 	/**
 	 * Get the ExtentReports instance, initializing it if necessary.
+	 *
 	 * @return ExtentReports instance
 	 */
 	public synchronized ExtentReports getExtent() {
@@ -46,6 +47,7 @@ public class ExtentManager {
 
 	/**
 	 * Create and configure the ExtentHtmlReporter.
+	 *
 	 * @return ExtentHtmlReporter instance
 	 */
 	private ExtentHtmlReporter getHtmlReporter() {
@@ -66,8 +68,9 @@ public class ExtentManager {
 
 	/**
 	 * Load custom configuration for the ExtentHtmlReporter.
+	 *
 	 * @param htmlReporter ExtentHtmlReporter instance
-	 * @param extentXML Path to the custom configuration file
+	 * @param extentXML    Path to the custom configuration file
 	 */
 	private void loadCustomConfig(ExtentHtmlReporter htmlReporter, String extentXML) {
 		frameworkLogger.info("Loading extent.xml from {}", extentXML);
@@ -81,6 +84,7 @@ public class ExtentManager {
 
 	/**
 	 * Load default configuration for the ExtentHtmlReporter.
+	 *
 	 * @param htmlReporter ExtentHtmlReporter instance
 	 */
 	private void loadDefaultConfig(ExtentHtmlReporter htmlReporter) {

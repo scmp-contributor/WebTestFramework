@@ -125,8 +125,8 @@ public class SuiteListener implements ISuiteListener {
 	/**
 	 * Find an existing Test Run in TestRail.
 	 *
-	 * @param projectId the project ID
-	 * @param timestamp the timestamp to filter Test Runs
+	 * @param projectId   the project ID
+	 * @param timestamp   the timestamp to filter Test Runs
 	 * @param testRunName the name of the Test Run
 	 * @return an optional containing the existing Test Run if found
 	 * @throws IOException if an I/O error occurs
@@ -157,8 +157,8 @@ public class SuiteListener implements ISuiteListener {
 	/**
 	 * Create a new Test Run in TestRail.
 	 *
-	 * @param suite the test suite
-	 * @param projectId the project ID
+	 * @param suite       the test suite
+	 * @param projectId   the project ID
 	 * @param testRunName the name of the Test Run
 	 * @throws IOException if an I/O error occurs
 	 */

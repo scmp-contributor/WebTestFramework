@@ -3,7 +3,6 @@ package com.scmp.framework.utils;
 import com.scmp.framework.model.ChartbeatData;
 import com.scmp.framework.model.GoogleAnalytics;
 import com.scmp.framework.model.GoogleAnalytics4;
-
 import org.json.JSONObject;
 import org.openqa.selenium.logging.LogEntries;
 import org.openqa.selenium.logging.LogEntry;
@@ -12,7 +11,6 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class NetworkUtils {
 
@@ -85,14 +83,14 @@ public class NetworkUtils {
 						if (matcher.matches()) {
 							boolean hasPostData = request.optBoolean("hasPostData", false);
 
-							try{
-								if(hasPostData && request.has("postData")){
+							try {
+								if (hasPostData && request.has("postData")) {
 									String postData = (String) request.get("postData");
 
 									String[] events = postData.split("\r\n");
 
 									// Get all the events and add them into list
-									for(int i = 0; i < events.length; i++){
+									for (int i = 0; i < events.length; i++) {
 
 										GoogleAnalytics4 ga4Data = new GoogleAnalytics4(url, events[i]);
 										String en = ga4Data.getEventName();
@@ -112,7 +110,7 @@ public class NetworkUtils {
 
 									ga4Datas.add(event);
 								}
-							}catch (Exception e){
+							} catch (Exception e) {
 								e.printStackTrace();
 							}
 						}

@@ -41,6 +41,7 @@ public class RunTimeContext {
 
 	/**
 	 * Get current date and time formatted as ISO_DATE_TIME
+	 *
 	 * @return formatted current date and time
 	 */
 	public static String currentDateAndTime() {
@@ -50,6 +51,7 @@ public class RunTimeContext {
 
 	/**
 	 * Set a global variable
+	 *
 	 * @param name variable name
 	 * @param data variable value
 	 */
@@ -59,6 +61,7 @@ public class RunTimeContext {
 
 	/**
 	 * Get a global variable
+	 *
 	 * @param name variable name
 	 * @return variable value
 	 */
@@ -68,6 +71,7 @@ public class RunTimeContext {
 
 	/**
 	 * Get a test-level variable
+	 *
 	 * @param name variable name
 	 * @return variable value
 	 */
@@ -77,6 +81,7 @@ public class RunTimeContext {
 
 	/**
 	 * Set a test-level variable
+	 *
 	 * @param name variable name
 	 * @param data variable value
 	 */
@@ -98,6 +103,7 @@ public class RunTimeContext {
 
 	/**
 	 * Get a property value
+	 *
 	 * @param name property name
 	 * @return property value
 	 */
@@ -107,7 +113,8 @@ public class RunTimeContext {
 
 	/**
 	 * Get a property value with a default
-	 * @param key property name
+	 *
+	 * @param key          property name
 	 * @param defaultValue default value
 	 * @return property value
 	 */
@@ -117,6 +124,7 @@ public class RunTimeContext {
 
 	/**
 	 * Get the URL from framework configs
+	 *
 	 * @return URL
 	 */
 	public String getURL() {
@@ -129,8 +137,9 @@ public class RunTimeContext {
 
 	/**
 	 * Get the log path for a given category, class, and method
-	 * @param category log category
-	 * @param className class name
+	 *
+	 * @param category   log category
+	 * @param className  class name
 	 * @param methodName method name
 	 * @return log path
 	 */
@@ -142,6 +151,7 @@ public class RunTimeContext {
 
 	/**
 	 * Check if local execution mode is enabled
+	 *
 	 * @return true if local execution mode is ON, false otherwise
 	 */
 	public boolean isLocalExecutionMode() {
@@ -150,6 +160,7 @@ public class RunTimeContext {
 
 	/**
 	 * Get the zone ID from framework configs
+	 *
 	 * @return zone ID
 	 */
 	public ZoneId getZoneId() {
@@ -158,6 +169,7 @@ public class RunTimeContext {
 
 	/**
 	 * Get the default extension path based on execution mode
+	 *
 	 * @return default extension path
 	 */
 	public String getDefaultExtensionPath() {
@@ -170,8 +182,9 @@ public class RunTimeContext {
 
 	/**
 	 * Build the log path
-	 * @param category log category
-	 * @param className class name
+	 *
+	 * @param category   log category
+	 * @param className  class name
 	 * @param methodName method name
 	 * @return log path
 	 */
@@ -183,6 +196,7 @@ public class RunTimeContext {
 
 	/**
 	 * Create directory if it does not exist
+	 *
 	 * @param path directory path
 	 */
 	private void createDirectoryIfNotExists(String path) {

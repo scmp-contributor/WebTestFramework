@@ -14,7 +14,7 @@ public class AnnotationTransformerListener implements IAnnotationTransformer {
 
 		// Handle Retry
 		IRetryAnalyzer retry = iTestAnnotation.getRetryAnalyzer();
-		if (retry==null) {
+		if (retry == null) {
 			iTestAnnotation.setRetryAnalyzer(RetryAnalyzer.class);
 		}
 	}

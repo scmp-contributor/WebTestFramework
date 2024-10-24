@@ -61,7 +61,7 @@ public class CommandPrompt {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 		String line = "";
 		ArrayList<String> allLine = new ArrayList<>();
-		while ((line = reader.readLine())!=null) {
+		while ((line = reader.readLine()) != null) {
 
 			if (line.isEmpty()) continue;
 
@@ -85,7 +85,7 @@ public class CommandPrompt {
 		public void run() {
 			String line = null;
 			try {
-				while ((line = reader.readLine())!=null) {
+				while ((line = reader.readLine()) != null) {
 //					if(!"ON".equalsIgnoreCase(TestContext.getInstance().getVariable("CMD_Mode")))
 //					{
 //						System.out.println(line);

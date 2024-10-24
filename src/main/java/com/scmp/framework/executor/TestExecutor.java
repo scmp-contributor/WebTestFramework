@@ -62,7 +62,8 @@ public class TestExecutor {
 
 	/**
 	 * Setup WebDriver and set global variable
-	 * @param manager WebDriverManager instance
+	 *
+	 * @param manager       WebDriverManager instance
 	 * @param driverPathKey Key for the driver path
 	 */
 	private void setupWebDriver(@NotNull WebDriverManager manager, String driverPathKey) {
@@ -106,6 +107,7 @@ public class TestExecutor {
 
 	/**
 	 * Get URLs for test packages
+	 *
 	 * @return List of URLs
 	 * @throws Exception exception
 	 */
@@ -123,6 +125,7 @@ public class TestExecutor {
 
 	/**
 	 * Find test methods annotated with @Test
+	 *
 	 * @param testPackagesUrls List of URLs
 	 * @return Set of Methods
 	 */
@@ -133,11 +136,12 @@ public class TestExecutor {
 
 	/**
 	 * Wait for the test completion
+	 *
 	 * @param executor ExecutorService
-	 * @param list List of FutureTask
+	 * @param list     List of FutureTask
 	 * @return boolean indicating if there was any failure
 	 * @throws InterruptedException exception
-	 * @throws ExecutionException exception
+	 * @throws ExecutionException   exception
 	 */
 	private boolean waitForTestCompletion(ExecutorService executor, @NotNull List<FutureTask<Boolean>> list) throws InterruptedException, ExecutionException {
 		while (true) {
@@ -178,6 +182,7 @@ public class TestExecutor {
 
 	/**
 	 * Initialize XML Suite
+	 *
 	 * @return XML Suite
 	 */
 	@NotNull
@@ -201,7 +206,8 @@ public class TestExecutor {
 
 	/**
 	 * Initialize XML Test
-	 * @param suite XML Suite
+	 *
+	 * @param suite   XML Suite
 	 * @param browser Browser name
 	 * @return XML Test
 	 */

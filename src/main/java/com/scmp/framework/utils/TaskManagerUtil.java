@@ -22,7 +22,7 @@ public class TaskManagerUtil {
 
 				br = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 				String line = null;
-				while ((line = br.readLine())!=null) {
+				while ((line = br.readLine()) != null) {
 					frameworkLogger.info(line);
 					if (line.contains(processName)) {
 						line = line.replaceAll("\\s+", " ");
@@ -39,7 +39,7 @@ public class TaskManagerUtil {
 
 				br = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 				String line = null;
-				while ((line = br.readLine())!=null) {
+				while ((line = br.readLine()) != null) {
 					frameworkLogger.info(line);
 					processList.add(line);
 				}
@@ -50,7 +50,7 @@ public class TaskManagerUtil {
 			frameworkLogger.error("Ops!", e);
 			return processList;
 		} finally {
-			if (br!=null) {
+			if (br != null) {
 				try {
 					br.close();
 				} catch (Exception ex) {
@@ -76,12 +76,12 @@ public class TaskManagerUtil {
 
 			br = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 			String line = null;
-			while ((line = br.readLine())!=null) {
+			while ((line = br.readLine()) != null) {
 				frameworkLogger.info(line);
 
 				BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 				String string_Temp = in.readLine();
-				while (string_Temp!=null) {
+				while (string_Temp != null) {
 					frameworkLogger.info(string_Temp);
 					string_Temp = in.readLine();
 				}
@@ -90,7 +90,7 @@ public class TaskManagerUtil {
 		} catch (Exception e) {
 			frameworkLogger.error("Ops!", e);
 		} finally {
-			if (br!=null) {
+			if (br != null) {
 				try {
 					br.close();
 				} catch (Exception ex) {

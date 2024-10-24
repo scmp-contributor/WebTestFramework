@@ -46,11 +46,11 @@ public class TestRailManager {
 		String userName = configs.getTestRailUserName();
 		String apiKey = configs.getTestRailAPIKey();
 
-		if (baseUrl==null
+		if (baseUrl == null
 				|| baseUrl.isEmpty()
-				|| userName==null
+				|| userName == null
 				|| userName.isEmpty()
-				|| apiKey==null
+				|| apiKey == null
 				|| apiKey.isEmpty()) {
 			throw new IllegalArgumentException(
 					String.format(
@@ -76,7 +76,7 @@ public class TestRailManager {
 						.build();
 
 		String inProgressId = configs.getTestRailStatusInProgressId();
-		if (inProgressId!=null && Pattern.compile("[0-9]+").matcher(inProgressId).matches()) {
+		if (inProgressId != null && Pattern.compile("[0-9]+").matcher(inProgressId).matches()) {
 			TestRailStatus.IN_PROGRESS = Integer.parseInt(inProgressId);
 		} else {
 			// Default use TestRailStatus.Retest for TestRailStatus.IN_PROGRESS
@@ -138,7 +138,7 @@ public class TestRailManager {
 				allResults.addAll(result.getTestRunTestList());
 			}
 
-			if (result.getPagingLinks().getNext()!=null) {
+			if (result.getPagingLinks().getNext() != null) {
 				offset += result.getSize();
 			} else {
 				withNextPage = false;
@@ -220,7 +220,7 @@ public class TestRailManager {
 				allResults.addAll(result.getTestRunTestList());
 			}
 
-			if (result.getPagingLinks().getNext()!=null) {
+			if (result.getPagingLinks().getNext() != null) {
 				offset += result.getSize();
 			} else {
 				withNextPage = false;
@@ -232,7 +232,7 @@ public class TestRailManager {
 
 	public TestRun addTestRun(String projectId, String testRunName, List<Integer> includeTestCaseIds)
 			throws IOException {
-		if (includeTestCaseIds==null) {
+		if (includeTestCaseIds == null) {
 			includeTestCaseIds = new ArrayList<>();
 		}
 

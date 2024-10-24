@@ -226,8 +226,8 @@ public class ReportService {
 	/**
 	 * Add a log entry to TestRail.
 	 *
-	 * @param status status of the test
-	 * @param message log message
+	 * @param status    status of the test
+	 * @param message   log message
 	 * @param imagePath path to the image
 	 */
 	private void addTestRailLog(int status, String message, String imagePath) {
@@ -340,7 +340,7 @@ public class ReportService {
 	/**
 	 * Log a fail message with an image.
 	 *
-	 * @param message log message
+	 * @param message           log message
 	 * @param originalImagePath path to the image
 	 */
 	public void logFailWithImage(String message, String originalImagePath) {
@@ -360,7 +360,7 @@ public class ReportService {
 	/**
 	 * Log a JSON string to a file.
 	 *
-	 * @param json JSON string
+	 * @param json     JSON string
 	 * @param fileName name of the file
 	 */
 	public void logJson(String json, String fileName) {

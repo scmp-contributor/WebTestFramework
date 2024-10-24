@@ -2,8 +2,8 @@ package com.scmp.framework.testng.listeners;
 
 import com.scmp.framework.context.ApplicationContextProvider;
 import com.scmp.framework.context.RunTimeContext;
-import com.scmp.framework.services.WebDriverService;
 import com.scmp.framework.services.ReportService;
+import com.scmp.framework.services.WebDriverService;
 import com.scmp.framework.testng.model.TestInfo;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.MutableCapabilities;
