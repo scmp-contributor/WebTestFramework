@@ -32,53 +32,6 @@ public final class InvokedMethodListener implements IInvokedMethodListener {
 	}
 
 	/**
-	 * Setup reporter in report manager
-	 *
-	 * @param testInfo test metadata for the test case
-	 */
-	private void setupReporterForTest(TestInfo testInfo) {
-		try {
-			// Create test node for test class in test report
-			reportService.setupReportForTestSet(testInfo);
-			reportService.setTestResult(testInfo.getTestResult());
-
-			// Create test case in test report
-			reportService.setTestInfo(testInfo);
-			reportService.setSetupStatus(true);
-		} catch (Exception e) {
-			frameworkLogger.error("Ops!", e);
-		}
-	}
-
-	/**
-	 * Setup web driver for current test
-	 *
-	 * @param testInfo test metadata for the test case
-	 * @throws Exception exception for starting driver instance
-	 */
-	private void setupDriverForTest(TestInfo testInfo) throws Exception {
-
-		MutableCapabilities browserOptions = testInfo.getBrowserOption();
-		Dimension deviceDimension = testInfo.getDeviceDimension();
-
-		try {
-			// Setup web driver
-			webDriverService.startDriverInstance(browserOptions, deviceDimension);
-		} catch (Exception ex1) {
-			if (!runTimeContext.isLocalExecutionMode()) {
-				webDriverService.stopWebDriver();
-				// Wait 30 seconds and retry driver setup
-				Thread.sleep(30000);
-
-				// Setup web driver
-				webDriverService.startDriverInstance(browserOptions, deviceDimension);
-			} else {
-				throw ex1;
-			}
-		}
-	}
-
-	/**
 	 * Before each method invocation
 	 * Initialize Web Driver and Report Manager
 	 */
@@ -150,6 +103,53 @@ public final class InvokedMethodListener implements IInvokedMethodListener {
 			}
 		} catch (Exception e) {
 			frameworkLogger.error("Ops!", e);
+		}
+	}
+
+	/**
+	 * Setup reporter in report manager
+	 *
+	 * @param testInfo test metadata for the test case
+	 */
+	private void setupReporterForTest(TestInfo testInfo) {
+		try {
+			// Create test node for test class in test report
+			reportService.setupReportForTestSet(testInfo);
+			reportService.setTestResult(testInfo.getTestResult());
+
+			// Create test case in test report
+			reportService.setTestInfo(testInfo);
+			reportService.setSetupStatus(true);
+		} catch (Exception e) {
+			frameworkLogger.error("Ops!", e);
+		}
+	}
+
+	/**
+	 * Setup web driver for current test
+	 *
+	 * @param testInfo test metadata for the test case
+	 * @throws Exception exception for starting driver instance
+	 */
+	private void setupDriverForTest(TestInfo testInfo) throws Exception {
+
+		MutableCapabilities browserOptions = testInfo.getBrowserOption();
+		Dimension deviceDimension = testInfo.getDeviceDimension();
+
+		try {
+			// Setup web driver
+			webDriverService.startDriverInstance(browserOptions, deviceDimension);
+		} catch (Exception ex1) {
+			if (!runTimeContext.isLocalExecutionMode()) {
+				webDriverService.stopWebDriver();
+				// Wait 30 seconds and retry driver setup
+				Thread.sleep(30000);
+
+				// Setup web driver
+				webDriverService.startDriverInstance(browserOptions, deviceDimension);
+			} else {
+				throw ex1;
+			}
 		}
 	}
 }
