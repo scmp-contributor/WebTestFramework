@@ -9,8 +9,11 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+/**
+ * CommandPrompt - Utility class for executing system commands.
+ */
 public class CommandPrompt {
-	Process process;
+	private Process process;
 	private static final Logger frameworkLogger = LoggerFactory.getLogger(CommandPrompt.class);
 
 	private static final String[] WIN_RUNTIME = {"cmd.exe", "/C"};
@@ -19,12 +22,28 @@ public class CommandPrompt {
 	public CommandPrompt() {
 	}
 
+	/**
+	 * Concatenates two arrays.
+	 *
+	 * @param first  the first array
+	 * @param second the second array
+	 * @param <T>    the type of the arrays
+	 * @return the concatenated array
+	 */
 	private static <T> T[] concat(T[] first, T[] second) {
 		T[] result = Arrays.copyOf(first, first.length + second.length);
 		System.arraycopy(second, 0, result, first.length, second.length);
 		return result;
 	}
 
+	/**
+	 * Executes a system command.
+	 *
+	 * @param command the command to execute
+	 * @return the process running the command
+	 * @throws InterruptedException if the thread is interrupted
+	 * @throws IOException          if an I/O error occurs
+	 */
 	public static Process executeCommand(String command) throws InterruptedException, IOException {
 		Process tempProcess;
 		ProcessBuilder tempBuilder;
@@ -33,9 +52,8 @@ public class CommandPrompt {
 		frameworkLogger.info("Running Command on [" + os + "]: " + command);
 
 		String[] allCommand;
-		// build cmd proccess according to os
-		if (os.contains("Windows")) // if windows
-		{
+		// Build command process according to OS
+		if (os.contains("Windows")) {
 			allCommand = concat(WIN_RUNTIME, new String[]{command});
 		} else {
 			allCommand = concat(OS_LINUX_RUNTIME, new String[]{command});
@@ -50,31 +68,38 @@ public class CommandPrompt {
 	}
 
 	/**
-	 * This method run command on windows and mac
+	 * Runs a command and returns the output.
 	 *
-	 * @param command to run
+	 * @param command the command to run
+	 * @return a list of output lines
+	 * @throws InterruptedException if the thread is interrupted
+	 * @throws IOException          if an I/O error occurs
 	 */
 	public ArrayList<String> runCommand(String command) throws InterruptedException, IOException {
 		process = executeCommand(command);
 
-		// get std output
+		// Get standard output
 		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-		String line = "";
+		String line;
 		ArrayList<String> allLine = new ArrayList<>();
 		while ((line = reader.readLine()) != null) {
-
 			if (line.isEmpty()) continue;
-
 			allLine.add(line);
 		}
 
 		return allLine;
 	}
 
-	public void destory() {
+	/**
+	 * Destroys the running process.
+	 */
+	public void destroy() {
 		process.destroy();
 	}
 
+	/**
+	 * StreamDrainer - Runnable class for draining input streams.
+	 */
 	class StreamDrainer implements Runnable {
 		private BufferedReader reader;
 
@@ -83,19 +108,17 @@ public class CommandPrompt {
 		}
 
 		public void run() {
-			String line = null;
+			String line;
 			try {
 				while ((line = reader.readLine()) != null) {
-//					if(!"ON".equalsIgnoreCase(TestContext.getInstance().getVariable("CMD_Mode")))
-//					{
-//						System.out.println(line);
-//					}
+					// Uncomment the following lines if needed
+					// if (!"ON".equalsIgnoreCase(TestContext.getInstance().getVariable("CMD_Mode"))) {
+					//     System.out.println(line);
+					// }
 				}
-
 			} catch (IOException e) {
 				frameworkLogger.error("Ops!", e);
 			}
 		}
 	}
-
 }
