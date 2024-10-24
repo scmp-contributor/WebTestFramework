@@ -23,10 +23,4 @@ public class Constants {
 	public static final String TEST_INFO_OBJECT = "TEST_INFO_OBJECT";
 	public static final String TEST_RUN_OBJECT = "TEST_RUN_OBJECT";
 	public static final String FILTERED_TEST_OBJECT = "FILTERED_TEST_OBJECT";
-
-	// Messages
-	public static final String INVALID_PROJECT_ID_MESSAGE = "Config TESTRAIL_PROJECT_ID [%s] is invalid!";
-	public static final String DEFAULT_TEST_RUN_NAME = "Automated Test Run %s";
-	public static final String TEST_RUN_CREATION_FAILED_MESSAGE = "Failed to create Test Run in TestRail.";
-	public static final String TEST_RUN_NOT_CREATED_MESSAGE = "Test Run is NOT created in TestRail, empty Test Case List is detected.";
 }

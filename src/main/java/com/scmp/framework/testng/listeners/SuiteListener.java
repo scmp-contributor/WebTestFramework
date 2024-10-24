@@ -9,7 +9,6 @@ import com.scmp.framework.testrail.TestRailManager;
 import com.scmp.framework.testrail.models.TestRun;
 import com.scmp.framework.testrail.models.TestRunResult;
 import com.scmp.framework.testrail.models.TestRunTest;
-import com.scmp.framework.utils.Constants;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +23,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static com.scmp.framework.utils.Constants.FILTERED_TEST_OBJECT;
+import static com.scmp.framework.utils.Constants.TEST_RUN_OBJECT;
 
 public class SuiteListener implements ISuiteListener {
 
@@ -44,17 +46,19 @@ public class SuiteListener implements ISuiteListener {
 
 	@Override
 	public void onFinish(ISuite suite) {
+		// Log the completion of the test suite execution
 		frameworkLogger.info("Test Suite execution completed.");
 	}
 
 	@Override
 	public void onStart(ISuite suite) {
+		// Check if TestRail upload is enabled in the configuration
 		if (frameworkConfigs.isTestRailUploadTestResult()) {
 			try {
-				setupTestRun(suite);
+				setupTestRunInTestRail(suite);
 			} catch (IOException e) {
-				frameworkLogger.error(Constants.TEST_RUN_CREATION_FAILED_MESSAGE, e);
-				throw new RuntimeException(Constants.TEST_RUN_CREATION_FAILED_MESSAGE, e);
+				frameworkLogger.error("Failed to create Test Run in TestRail.", e);
+				throw new RuntimeException("Failed to create Test Run in TestRail.", e);
 			} catch (Exception e) {
 				frameworkLogger.error("Unexpected error occurred while creating Test Run in TestRail.", e);
 				throw new RuntimeException("Unexpected error occurred while creating Test Run in TestRail.", e);
@@ -62,6 +66,12 @@ public class SuiteListener implements ISuiteListener {
 		}
 	}
 
+	/**
+	 * Retrieve all TestRail test case IDs from the suite.
+	 *
+	 * @param suite the test suite
+	 * @return a list of TestRail test case IDs
+	 */
 	private List<Integer> getAllTestRailTestCases(@NotNull ISuite suite) {
 		return suite.getAllMethods().stream()
 				.map(method -> {
@@ -73,7 +83,13 @@ public class SuiteListener implements ISuiteListener {
 				.collect(Collectors.toList());
 	}
 
-	private void setupTestRun(ISuite suite) throws IOException {
+	/**
+	 * Setup a Test Run in TestRail.
+	 *
+	 * @param suite the test suite
+	 * @throws IOException if an I/O error occurs
+	 */
+	private void setupTestRunInTestRail(ISuite suite) throws IOException {
 		frameworkLogger.info("Creating Test Run in TestRail...");
 
 		String projectId = frameworkConfigs.getTestRailProjectId();
@@ -81,7 +97,8 @@ public class SuiteListener implements ISuiteListener {
 
 		LocalDate today = LocalDate.now(runTimeContext.getZoneId());
 		String timestamp = String.valueOf(today.minusDays(7).atStartOfDay(runTimeContext.getZoneId()).toEpochSecond());
-		String testRunName = frameworkConfigs.getTestRailTestRunName().isEmpty() ? String.format(Constants.DEFAULT_TEST_RUN_NAME, today) : frameworkConfigs.getTestRailTestRunName().trim();
+		String defaultTestRunName = String.format("Automated Test Run - %s", today);
+		String testRunName = frameworkConfigs.getTestRailTestRunName().isEmpty() ? defaultTestRunName : frameworkConfigs.getTestRailTestRunName().trim();
 
 		if (!frameworkConfigs.isTestRailCreateNewTestRun()) {
 			Optional<TestRun> existingTestRun = findExistingTestRun(projectId, timestamp, testRunName);
@@ -94,12 +111,26 @@ public class SuiteListener implements ISuiteListener {
 		createNewTestRun(suite, projectId, testRunName);
 	}
 
+	/**
+	 * Validate the TestRail project ID.
+	 *
+	 * @param projectId the project ID to validate
+	 */
 	private void validateProjectId(String projectId) {
 		if (projectId == null || !Pattern.compile("[0-9]+").matcher(projectId).matches()) {
-			throw new IllegalArgumentException(String.format(Constants.INVALID_PROJECT_ID_MESSAGE, projectId));
+			throw new IllegalArgumentException(String.format("Invalid project ID: %s", projectId));
 		}
 	}
 
+	/**
+	 * Find an existing Test Run in TestRail.
+	 *
+	 * @param projectId the project ID
+	 * @param timestamp the timestamp to filter Test Runs
+	 * @param testRunName the name of the Test Run
+	 * @return an optional containing the existing Test Run if found
+	 * @throws IOException if an I/O error occurs
+	 */
 	@NotNull
 	private Optional<TestRun> findExistingTestRun(String projectId, String timestamp, String testRunName) throws IOException {
 		TestRunResult testRunResult = testRailManager.getTestRuns(projectId, timestamp);
@@ -108,15 +139,29 @@ public class SuiteListener implements ISuiteListener {
 				.findFirst();
 	}
 
+	/**
+	 * Use an existing Test Run in TestRail.
+	 *
+	 * @param existingTestRun the existing Test Run
+	 * @throws IOException if an I/O error occurs
+	 */
 	private void useExistingTestRun(@NotNull TestRun existingTestRun) throws IOException {
 		frameworkLogger.info("Use existing TestRun, Id: {}, Name: {}", existingTestRun.getId(), existingTestRun.getName());
-		runTimeContext.setGlobalVariables(Constants.TEST_RUN_OBJECT, existingTestRun);
+		runTimeContext.setGlobalVariables(TEST_RUN_OBJECT, existingTestRun);
 
 		String statusFilter = frameworkConfigs.getTestRailTestStatusFilter().replace(" ", "");
 		List<TestRunTest> matchedTests = testRailManager.getAllTestRunTests(existingTestRun.getId(), statusFilter);
-		runTimeContext.setGlobalVariables(Constants.FILTERED_TEST_OBJECT, matchedTests);
+		runTimeContext.setGlobalVariables(FILTERED_TEST_OBJECT, matchedTests);
 	}
 
+	/**
+	 * Create a new Test Run in TestRail.
+	 *
+	 * @param suite the test suite
+	 * @param projectId the project ID
+	 * @param testRunName the name of the Test Run
+	 * @throws IOException if an I/O error occurs
+	 */
 	private void createNewTestRun(ISuite suite, String projectId, String testRunName) throws IOException {
 		List<Integer> testCaseIdList = frameworkConfigs.isTestRailIncludeAllAutomatedTestCases() ?
 				testRailManager.getAllAutomatedTestCases(projectId).stream().map(TestRunTest::getId).collect(Collectors.toList()) :
@@ -124,15 +169,15 @@ public class SuiteListener implements ISuiteListener {
 
 		if (!testCaseIdList.isEmpty()) {
 			TestRun testRun = testRailManager.addTestRun(projectId, testRunName, testCaseIdList);
-			runTimeContext.setGlobalVariables(Constants.TEST_RUN_OBJECT, testRun);
+			runTimeContext.setGlobalVariables(TEST_RUN_OBJECT, testRun);
 			if (testRun != null && testRun.getId() > 0) {
 				frameworkLogger.info("Test Run created in TestRail - Id: {}, Name: {}", testRun.getId(), testRun.getName());
 			} else {
-				frameworkLogger.error(Constants.TEST_RUN_CREATION_FAILED_MESSAGE);
-				throw new RuntimeException(Constants.TEST_RUN_CREATION_FAILED_MESSAGE);
+				frameworkLogger.error("Failed to create Test Run in TestRail.");
+				throw new RuntimeException("Failed to create Test Run in TestRail.");
 			}
 		} else {
-			frameworkLogger.warn(Constants.TEST_RUN_NOT_CREATED_MESSAGE);
+			frameworkLogger.warn("No Test Run created as no test cases were found.");
 		}
 	}
 }
