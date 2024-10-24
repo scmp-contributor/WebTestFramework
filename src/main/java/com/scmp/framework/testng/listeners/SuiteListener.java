@@ -1,3 +1,4 @@
+// src/main/java/com/scmp/framework/testng/listeners/SuiteListener.java
 package com.scmp.framework.testng.listeners;
 
 import com.scmp.framework.annotations.testrail.TestRailTestCase;
@@ -8,12 +9,13 @@ import com.scmp.framework.testrail.TestRailManager;
 import com.scmp.framework.testrail.models.TestRun;
 import com.scmp.framework.testrail.models.TestRunResult;
 import com.scmp.framework.testrail.models.TestRunTest;
+import com.scmp.framework.utils.Constants;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
-import org.testng.ITestNGMethod;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -23,12 +25,10 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.scmp.framework.utils.Constants.FILTERED_TEST_OBJECT;
-import static com.scmp.framework.utils.Constants.TEST_RUN_OBJECT;
-
 public class SuiteListener implements ISuiteListener {
 
 	private static final Logger frameworkLogger = LoggerFactory.getLogger(SuiteListener.class);
+
 	private final RunTimeContext runTimeContext;
 	private final FrameworkConfigs frameworkConfigs;
 	private final TestRailManager testRailManager;
@@ -49,111 +49,90 @@ public class SuiteListener implements ISuiteListener {
 
 	@Override
 	public void onStart(ISuite suite) {
-
 		if (frameworkConfigs.isTestRailUploadTestResult()) {
 			try {
-				createTestRun(suite);
+				setupTestRun(suite);
+			} catch (IOException e) {
+				frameworkLogger.error(Constants.TEST_RUN_CREATION_FAILED_MESSAGE, e);
+				throw new RuntimeException(Constants.TEST_RUN_CREATION_FAILED_MESSAGE, e);
 			} catch (Exception e) {
-				String errorMessage = "Failed to create Test Run in TestRail.";
-				frameworkLogger.error(errorMessage, e);
-				throw new RuntimeException(errorMessage);
+				frameworkLogger.error("Unexpected error occurred while creating Test Run in TestRail.", e);
+				throw new RuntimeException("Unexpected error occurred while creating Test Run in TestRail.", e);
 			}
 		}
 	}
 
-	private List<Integer> getAllTestRailTestCases(ISuite suite) {
-		List<ITestNGMethod> testNGMethods = suite.getAllMethods();
-		return testNGMethods.stream()
-				.map(
-						iTestNGMethod -> {
-							TestRailTestCase testRailTestCase =
-									iTestNGMethod
-											.getConstructorOrMethod()
-											.getMethod()
-											.getAnnotation(TestRailTestCase.class);
-							if (testRailTestCase!=null) {
-								return testRailTestCase.id();
-							} else {
-								return null;
-							}
-						})
+	private List<Integer> getAllTestRailTestCases(@NotNull ISuite suite) {
+		return suite.getAllMethods().stream()
+				.map(method -> {
+					TestRailTestCase testRailTestCase = method.getConstructorOrMethod().getMethod().getAnnotation(TestRailTestCase.class);
+					return testRailTestCase != null ? testRailTestCase.id() : null;
+				})
 				.filter(Objects::nonNull)
 				.sorted()
 				.collect(Collectors.toList());
 	}
 
-	private void createTestRun(ISuite suite) throws IOException {
+	private void setupTestRun(ISuite suite) throws IOException {
 		frameworkLogger.info("Creating Test Run in TestRail...");
 
 		String projectId = frameworkConfigs.getTestRailProjectId();
-
-		if (projectId==null || !Pattern.compile("[0-9]+").matcher(projectId).matches()) {
-			throw new IllegalArgumentException(
-					String.format("Config TESTRAIL_PROJECT_ID [%s] is invalid!", projectId));
-		}
+		validateProjectId(projectId);
 
 		LocalDate today = LocalDate.now(runTimeContext.getZoneId());
 		String timestamp = String.valueOf(today.minusDays(7).atStartOfDay(runTimeContext.getZoneId()).toEpochSecond());
-		String testRunName = frameworkConfigs.getTestRailTestRunName();
-
-		if (testRunName.isEmpty()) {
-			// Default Test Run Name
-			testRunName = String.format("Automated Test Run %s", today);
-		}
-
-		final String finalTestRunName = testRunName.trim();
+		String testRunName = frameworkConfigs.getTestRailTestRunName().isEmpty() ? String.format(Constants.DEFAULT_TEST_RUN_NAME, today) : frameworkConfigs.getTestRailTestRunName().trim();
 
 		if (!frameworkConfigs.isTestRailCreateNewTestRun()) {
-			TestRunResult testRunResult = testRailManager.getTestRuns(projectId, timestamp);
-			Optional<TestRun> existingTestRun =
-					testRunResult.getTestRunList().stream()
-							.filter(testRun -> testRun.getName().trim().equalsIgnoreCase(finalTestRunName))
-							.findFirst();
-
+			Optional<TestRun> existingTestRun = findExistingTestRun(projectId, timestamp, testRunName);
 			if (existingTestRun.isPresent()) {
-				// Use the existing TestRun for testing
-				TestRun existingTestRunData = existingTestRun.get();
-				frameworkLogger.info(
-						"Use existing TestRun, Id: {}, Name: {}",
-						existingTestRunData.getId(),
-						existingTestRunData.getName());
-				runTimeContext.setGlobalVariables(TEST_RUN_OBJECT, existingTestRunData);
-
-				String statusFilter = frameworkConfigs.getTestRailTestStatusFilter().replace(" ", "");
-
-				List<TestRunTest> matchedTests =
-						testRailManager.getAllTestRunTests(existingTestRunData.getId(), statusFilter);
-				runTimeContext.setGlobalVariables(FILTERED_TEST_OBJECT, matchedTests);
-
+				useExistingTestRun(existingTestRun.get());
 				return;
 			}
 		}
 
-		// Create a new test run
-		// Look up test case ids
-		List<Integer> testCaseIdList;
-		if (frameworkConfigs.isTestRailIncludeAllAutomatedTestCases()) {
-			List<TestRunTest> testCaseList = testRailManager.getAllAutomatedTestCases(projectId);
-			testCaseIdList = testCaseList.stream().map(TestRunTest::getId).collect(Collectors.toList());
-		} else {
-			testCaseIdList = this.getAllTestRailTestCases(suite);
+		createNewTestRun(suite, projectId, testRunName);
+	}
+
+	private void validateProjectId(String projectId) {
+		if (projectId == null || !Pattern.compile("[0-9]+").matcher(projectId).matches()) {
+			throw new IllegalArgumentException(String.format(Constants.INVALID_PROJECT_ID_MESSAGE, projectId));
 		}
+	}
+
+	@NotNull
+	private Optional<TestRun> findExistingTestRun(String projectId, String timestamp, String testRunName) throws IOException {
+		TestRunResult testRunResult = testRailManager.getTestRuns(projectId, timestamp);
+		return testRunResult.getTestRunList().stream()
+				.filter(testRun -> testRun.getName().trim().equalsIgnoreCase(testRunName))
+				.findFirst();
+	}
+
+	private void useExistingTestRun(@NotNull TestRun existingTestRun) throws IOException {
+		frameworkLogger.info("Use existing TestRun, Id: {}, Name: {}", existingTestRun.getId(), existingTestRun.getName());
+		runTimeContext.setGlobalVariables(Constants.TEST_RUN_OBJECT, existingTestRun);
+
+		String statusFilter = frameworkConfigs.getTestRailTestStatusFilter().replace(" ", "");
+		List<TestRunTest> matchedTests = testRailManager.getAllTestRunTests(existingTestRun.getId(), statusFilter);
+		runTimeContext.setGlobalVariables(Constants.FILTERED_TEST_OBJECT, matchedTests);
+	}
+
+	private void createNewTestRun(ISuite suite, String projectId, String testRunName) throws IOException {
+		List<Integer> testCaseIdList = frameworkConfigs.isTestRailIncludeAllAutomatedTestCases() ?
+				testRailManager.getAllAutomatedTestCases(projectId).stream().map(TestRunTest::getId).collect(Collectors.toList()) :
+				getAllTestRailTestCases(suite);
 
 		if (!testCaseIdList.isEmpty()) {
-			// Create test run
-			TestRun testRun = testRailManager.addTestRun(projectId, finalTestRunName, testCaseIdList);
-			// Save new created test run
-			runTimeContext.setGlobalVariables(TEST_RUN_OBJECT, testRun);
-			if (testRun!=null && testRun.getId() > 0) {
-				frameworkLogger.info(
-						"Test Run created in TestRail - Id: {}, Name: {}", testRun.getId(), testRun.getName());
+			TestRun testRun = testRailManager.addTestRun(projectId, testRunName, testCaseIdList);
+			runTimeContext.setGlobalVariables(Constants.TEST_RUN_OBJECT, testRun);
+			if (testRun != null && testRun.getId() > 0) {
+				frameworkLogger.info("Test Run created in TestRail - Id: {}, Name: {}", testRun.getId(), testRun.getName());
 			} else {
-				frameworkLogger.error("Failed to create Test Run in TestRail.");
-				throw new RuntimeException("Failed to create Test Run in TestRail.");
+				frameworkLogger.error(Constants.TEST_RUN_CREATION_FAILED_MESSAGE);
+				throw new RuntimeException(Constants.TEST_RUN_CREATION_FAILED_MESSAGE);
 			}
 		} else {
-			frameworkLogger.warn(
-					"Test Run is NOT created in TestRail, empty Test Case List is detected.");
+			frameworkLogger.warn(Constants.TEST_RUN_NOT_CREATED_MESSAGE);
 		}
 	}
 }
