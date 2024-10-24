@@ -70,26 +70,13 @@ public class ReportService {
 			// Print exception stack trace if any
 			Throwable throwable = result.getThrowable();
 			if (throwable != null) {
-				frameworkLogger.error("Ops!", throwable);
+				frameworkLogger.error("Test failed with exception: ", throwable);
 				currentTestMethod.get().log(Status.FAIL, "<pre>" + result.getThrowable().getMessage() + "</pre>");
 				this.addTestRailLog(TestRailStatus.Failed, result.getThrowable().getMessage(), null);
 			}
 
 			// Add screenshot
-			try {
-				String screenShotAbsolutePath =
-						screenshotService.captureScreenShot(
-								Status.FAIL,
-								result.getInstance().getClass().getSimpleName(),
-								result.getMethod().getMethodName());
-
-				String screenShotRelativePath = getRelativePathToReport(screenShotAbsolutePath);
-				currentTestMethod.get().addScreenCaptureFromPath(screenShotRelativePath);
-				this.addTestRailLog(TestRailStatus.Failed, "", screenShotAbsolutePath);
-
-			} catch (Exception e) {
-				frameworkLogger.error("Ops!", e);
-			}
+			addScreenshotToReport(result, Status.FAIL);
 		}
 	}
 
@@ -117,6 +104,19 @@ public class ReportService {
 		extentTestService.flush();
 
 		// Handling for Retry
+		handleRetry(result);
+
+		extentTestService.flush();
+
+		this.testInfo.get().uploadTestResultsToTestRail();
+	}
+
+	/**
+	 * Handle retry logic for failed tests.
+	 *
+	 * @param result TestNG test result
+	 */
+	private void handleRetry(ITestResult result) {
 		IRetryAnalyzer analyzer = result.getMethod().getRetryAnalyzer();
 		if (analyzer instanceof RetryAnalyzer) {
 			if (((RetryAnalyzer) analyzer).isRetriedMethod(result) || result.getStatus() == ITestResult.FAILURE) {
@@ -133,10 +133,6 @@ public class ReportService {
 		if (result.getStatus() == ITestResult.SKIP) {
 			this.skipTest();
 		}
-
-		extentTestService.flush();
-
-		this.testInfo.get().uploadTestResultsToTestRail();
 	}
 
 	/**
@@ -222,7 +218,7 @@ public class ReportService {
 		try {
 			return screenshotService.getScreenshotPath(classAndMethod[0], classAndMethod[1], imageName);
 		} catch (Exception e) {
-			frameworkLogger.error("Ops!", e);
+			frameworkLogger.error("Error getting screenshot path: ", e);
 			return null;
 		}
 	}
@@ -276,7 +272,7 @@ public class ReportService {
 
 			return screenShotAbsolutePath;
 		} catch (Exception e) {
-			frameworkLogger.error("Ops!", e);
+			frameworkLogger.error("Error capturing screenshot: ", e);
 		}
 
 		return "";
@@ -357,7 +353,7 @@ public class ReportService {
 
 			this.addTestRailLog(TestRailStatus.Failed, message, originalImagePath);
 		} catch (Exception e) {
-			frameworkLogger.error("Ops!", e);
+			frameworkLogger.error("Error logging fail with image: ", e);
 		}
 	}
 
@@ -389,7 +385,7 @@ public class ReportService {
 
 			this.logInfo("<a target='_blank' href='" + getRelativePathToReport(filePath) + "'> " + fileName + " </a>");
 		} catch (IOException e) {
-			e.printStackTrace();
+			frameworkLogger.error("Error writing JSON to file: ", e);
 		}
 	}
 
@@ -403,7 +399,7 @@ public class ReportService {
 			String[] classAndMethod = getTestClassNameAndMethodName().split(",");
 			return screenshotService.captureScreenShot(Status.INFO, classAndMethod[0], classAndMethod[1]);
 		} catch (Exception e) {
-			frameworkLogger.error("Ops!", e);
+			frameworkLogger.error("Error capturing screenshot: ", e);
 		}
 
 		return null;
@@ -419,7 +415,7 @@ public class ReportService {
 			this.currentTestMethod.get().addScreenCaptureFromPath(imagePath);
 			this.addTestRailLog(TestRailStatus.Passed, "", imagePath);
 		} catch (Exception e) {
-			frameworkLogger.error("Ops!", e);
+			frameworkLogger.error("Error attaching image: ", e);
 		}
 	}
 
@@ -455,5 +451,26 @@ public class ReportService {
 		}
 
 		return classAndMethod;
+	}
+
+	/**
+	 * Add a screenshot to the report.
+	 *
+	 * @param result TestNG test result
+	 * @param status status of the log entry
+	 */
+	private void addScreenshotToReport(ITestResult result, Status status) {
+		try {
+			String screenShotAbsolutePath = screenshotService.captureScreenShot(
+					status,
+					result.getInstance().getClass().getSimpleName(),
+					result.getMethod().getMethodName());
+
+			String screenShotRelativePath = getRelativePathToReport(screenShotAbsolutePath);
+			currentTestMethod.get().addScreenCaptureFromPath(screenShotRelativePath);
+			this.addTestRailLog(TestRailStatus.Failed, "", screenShotAbsolutePath);
+		} catch (Exception e) {
+			frameworkLogger.error("Error adding screenshot to report: ", e);
+		}
 	}
 }
