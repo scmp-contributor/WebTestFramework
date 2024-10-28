@@ -11,6 +11,9 @@ import org.springframework.context.ApplicationContext;
 
 import java.util.Random;
 
+/**
+ * BaseTest - Base class for all test classes providing common functionalities.
+ */
 public class BaseTest {
 	private static final Logger frameworkLogger = LoggerFactory.getLogger(BaseTest.class);
 	protected final TestLogger logger;
@@ -18,6 +21,9 @@ public class BaseTest {
 	private final RunTimeContext runTimeContext;
 	private final WebDriverService webDriverService;
 
+	/**
+	 * Constructor to initialize the context, logger, runtime context, and WebDriver service.
+	 */
 	public BaseTest() {
 		ApplicationContext context = ApplicationContextProvider.getApplicationContext();
 		logger = context.getBean(TestLogger.class);
@@ -25,10 +31,21 @@ public class BaseTest {
 		webDriverService = context.getBean(WebDriverService.class);
 	}
 
+	/**
+	 * Retrieves the RemoteWebDriver instance.
+	 *
+	 * @return the RemoteWebDriver instance
+	 */
 	public RemoteWebDriver getDriver() {
 		return webDriverService.getDriver();
 	}
 
+	/**
+	 * Generates a random number string of a specified length.
+	 *
+	 * @param length the length of the random number string
+	 * @return the generated random number string
+	 */
 	public String getRandomNumberString(int length) {
 		StringBuilder output = new StringBuilder();
 		Random random = new Random();
@@ -41,12 +58,17 @@ public class BaseTest {
 		return output.toString();
 	}
 
+	/**
+	 * Pauses the execution for a specified duration.
+	 *
+	 * @param millis the duration to pause in milliseconds
+	 */
 	public void sleep(long millis) {
 		try {
-			frameworkLogger.info("Wait for " + millis + " milliseconds");
+			frameworkLogger.info("Wait for {} milliseconds", millis);
 			Thread.sleep(millis);
 		} catch (InterruptedException e) {
-			frameworkLogger.error("Ops!", e);
+			frameworkLogger.error("Interrupted during sleep: ", e);
 		}
 	}
 }
