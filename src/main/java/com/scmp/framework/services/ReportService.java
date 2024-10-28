@@ -117,7 +117,7 @@ public class ReportService {
 	 * @param result TestNG test result
 	 */
 	private void handleRetry(ITestResult result) {
-		IRetryAnalyzer analyzer = result.getMethod().getRetryAnalyzer();
+		IRetryAnalyzer analyzer = result.getMethod().getRetryAnalyzer(result);
 		if (analyzer instanceof RetryAnalyzer) {
 			if (((RetryAnalyzer) analyzer).isRetriedMethod(result) || result.getStatus() == ITestResult.FAILURE) {
 				this.addTag("RETRIED");

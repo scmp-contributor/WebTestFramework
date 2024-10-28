@@ -220,7 +220,7 @@ public class TestInfo {
 
 		// Get browser type from retry method
 		Browser retryBrowserType = null;
-		IRetryAnalyzer analyzer = testResult.getMethod().getRetryAnalyzer();
+		IRetryAnalyzer analyzer = testResult.getMethod().getRetryAnalyzer(testResult);
 		if (analyzer instanceof RetryAnalyzer) {
 			retryBrowserType = ((RetryAnalyzer) analyzer).getRetryMethod(testResult).getBrowserType();
 		}
