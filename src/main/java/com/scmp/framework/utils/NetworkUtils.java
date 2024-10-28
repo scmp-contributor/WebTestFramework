@@ -1,7 +1,6 @@
 package com.scmp.framework.utils;
 
 import com.scmp.framework.model.ChartbeatData;
-import com.scmp.framework.model.GoogleAnalytics;
 import com.scmp.framework.model.GoogleAnalytics4;
 import org.json.JSONObject;
 import org.openqa.selenium.logging.LogEntries;
@@ -142,17 +141,6 @@ public class NetworkUtils {
 				});
 
 		return trackingData;
-	}
-
-	/**
-	 * Retrieves Google Analytics tracking requests.
-	 *
-	 * @param driver the RemoteWebDriver instance
-	 * @return a list of Google Analytics tracking data
-	 */
-	public static List<GoogleAnalytics> getGoogleAnalyticsRequests(RemoteWebDriver driver) {
-		String pattern = "^https://www.google-analytics.com/([a-z]/)?collect\\?.+";
-		return getTrackingRequests(driver, GoogleAnalytics.class, pattern);
 	}
 
 	/**
