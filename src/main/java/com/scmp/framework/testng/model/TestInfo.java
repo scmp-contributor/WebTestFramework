@@ -461,6 +461,7 @@ public class TestInfo {
 			List<TestRunTest> filteredTests = (List<TestRunTest>) filteredTestsObject;
 
 			TestRailTestCase testRailTestCase = this.declaredMethod.getAnnotation(TestRailTestCase.class);
+			if (testRailTestCase == null) return false;
 			Optional<TestRunTest> result = filteredTests.parallelStream().filter(test -> test.getCaseId() == testRailTestCase.id()).findFirst();
 
 			return result.isPresent();
