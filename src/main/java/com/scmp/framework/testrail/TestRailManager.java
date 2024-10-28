@@ -365,7 +365,7 @@ public class TestRailManager {
 		data.put(CustomQuery, "");
 
 		File file = new File(imagePath);
-		RequestBody requestFile = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+		RequestBody requestFile = RequestBody.create(file, MediaType.parse("multipart/form-data"));
 		MultipartBody.Part imageToUpload = MultipartBody.Part.createFormData("attachment", file.getName(), requestFile);
 
 		retrofit2.Response<Attachment> response = service.addAttachment(data, imageToUpload).execute();
@@ -393,7 +393,7 @@ public class TestRailManager {
 		data.put(CustomQuery, "");
 
 		File file = new File(imagePath);
-		RequestBody requestFile = RequestBody.create(MediaType.parse("multipart/form-data"), file);
+		RequestBody requestFile = RequestBody.create(file, MediaType.parse("multipart/form-data"));
 		MultipartBody.Part imageToUpload = MultipartBody.Part.createFormData("attachment", file.getName(), requestFile);
 
 		retrofit2.Response<Attachment> response = service.addAttachment(data, imageToUpload).execute();
