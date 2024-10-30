@@ -315,7 +315,9 @@ public class TestInfo {
 
 		// headless mode
 		HeadlessMode headlessMode = this.declaredMethod.getAnnotation(HeadlessMode.class);
-		options.setHeadless(headlessMode != null);
+		if (headlessMode != null) {
+			options.addArguments("--headless=new");
+		}
 
 		// Accept untrusted certificates
 		AcceptUntrustedCertificates acceptUntrustedCertificates = this.declaredMethod.getAnnotation(AcceptUntrustedCertificates.class);
@@ -388,7 +390,9 @@ public class TestInfo {
 
 		// headless mode
 		HeadlessMode headlessMode = this.declaredMethod.getAnnotation(HeadlessMode.class);
-		options.setHeadless(headlessMode != null);
+		if (headlessMode != null) {
+			options.addArguments("--headless=new");
+		}
 
 		// Accept untrusted certificates
 		AcceptUntrustedCertificates acceptUntrustedCertificates = this.declaredMethod.getAnnotation(AcceptUntrustedCertificates.class);

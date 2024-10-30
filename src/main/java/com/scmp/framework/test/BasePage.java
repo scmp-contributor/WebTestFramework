@@ -131,9 +131,11 @@ public abstract class BasePage extends BasePageElement {
 	 */
 	public void scrollToTop() {
 		this.getDriver().executeScript(
-				"var cssSelector = arguments[0];" +
-						"var element = document.querySelector(cssSelector);" +
-						"element.scrollTo(0, 0)",
+      """
+				var cssSelector = arguments[0];
+				var element = document.querySelector(cssSelector);
+				element.scrollTo(0, 0);
+				""",
 				this.viewSelector
 		);
 		sleep(500);
@@ -249,10 +251,12 @@ public abstract class BasePage extends BasePageElement {
 	 */
 	public void scroll(String cssSelector, int delta) {
 		this.getDriver().executeScript(
-				"var cssSelector = arguments[0];" +
-						"var delta = arguments[1];" +
-						"var element = document.querySelector(cssSelector);" +
-						"element.scrollBy(0, delta)",
+				"""
+						var cssSelector = arguments[0];
+						var delta = arguments[1];
+						var element = document.querySelector(cssSelector);
+						element.scrollBy(0, delta)
+						""",
 				cssSelector, delta
 		);
 		sleep(500);
@@ -266,9 +270,11 @@ public abstract class BasePage extends BasePageElement {
 	 */
 	public int getScrollTop(String cssSelector) {
 		Long scrollTop = (Long) this.getDriver().executeScript(
-				"var cssSelector = arguments[0];" +
-						"var element = document.querySelector(cssSelector);" +
-						"return parseInt(element.scrollTop);",
+				"""
+						var cssSelector = arguments[0];
+						var element = document.querySelector(cssSelector);
+						return parseInt(element.scrollTop);
+						""",
 				cssSelector
 		);
 		return scrollTop.intValue();
