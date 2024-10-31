@@ -115,6 +115,7 @@ public class TestInfo {
 			}
 
 			long elapsed = Duration.between(this.testStartTime, this.testEndTime).getSeconds();
+			elapsed = elapsed == 0 ? 1 : elapsed;
 			this.testRailDataService.uploadDataToTestRail(finalTestResult, elapsed);
 		}
 	}
