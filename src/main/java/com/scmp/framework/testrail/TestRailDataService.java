@@ -79,13 +79,13 @@ public class TestRailDataService {
 					// Wait for test result for attachment to be ready
 					initializationLatch.await();
 
-					frameworkLogger.info("Uploading attachment: " + filePath);
+					frameworkLogger.info("Uploading attachment: {}", filePath);
 					Attachment attachment =
 							testRailManager.addAttachmentToTestResult(testResultForUploadAttachments.getId(), filePath);
 
 					String attachmentRef =
 							String.format(Attachment.ATTACHMENT_REF_STRING, attachment.getAttachmentId());
-					frameworkLogger.info("Attachment uploaded: " + attachmentRef);
+					frameworkLogger.info("Attachment uploaded: {}", attachmentRef);
 					stepResult.setContent(stepResult.getContent() + " \n " + attachmentRef);
 				} catch (Exception e) {
 					frameworkLogger.error("Failed to upload attachment.", e);

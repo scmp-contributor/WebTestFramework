@@ -5,7 +5,7 @@ public enum Browser {
 	CHROME("CHROME"),
 	FIREFOX("FIREFOX");
 
-	private String name;
+	private final String name;
 
 	Browser(String name) {
 		this.name = name;

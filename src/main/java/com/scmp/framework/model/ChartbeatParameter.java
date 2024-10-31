@@ -11,7 +11,7 @@ public enum ChartbeatParameter {
 	Referring_Url_Internal("v"),
 	Page_session("t");
 
-	private String parameter;
+	private final String parameter;
 
 	ChartbeatParameter(String parameter) {
 		this.parameter = parameter;

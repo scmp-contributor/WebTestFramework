@@ -24,7 +24,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -117,8 +120,9 @@ public class TestExecutor {
 		String testClassPackagePath = "file:" + TARGET_PATH + File.separator + "test-classes" + File.separator;
 
 		for (String packageName : packageList) {
-			URL testPackagesUrl = new URL(testClassPackagePath + packageName.replaceAll("\\.", "/"));
-			testPackagesUrls.add(testPackagesUrl);
+			Path testPackagesPath = Paths.get(testClassPackagePath, packageName.replaceAll("\\.", "/"));
+			URI testPackagesUri = testPackagesPath.toUri();
+			testPackagesUrls.add(testPackagesUri.toURL());
 		}
 		return testPackagesUrls;
 	}

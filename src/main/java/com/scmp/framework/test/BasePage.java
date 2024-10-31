@@ -22,7 +22,7 @@ public abstract class BasePage extends BasePageElement {
 
 	@Getter
 	private final RemoteWebDriver driver;
-	private String viewSelector;
+	private final String viewSelector;
 	private int screenHeight = -1;
 	private int screenWidth = -1;
 	public String PATH = "";

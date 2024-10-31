@@ -6,7 +6,7 @@ public enum GoogleAnalytics4Parameter {
 	EVENT_DATA("ep"),
 	DOCUMENT_LOCATION("dl");
 
-	private String parameter;
+	private final String parameter;
 
 	GoogleAnalytics4Parameter(String parameter) {
 		this.parameter = parameter;

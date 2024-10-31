@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.net.URL;
+import java.net.URI;
 import java.time.Duration;
 
 import static com.scmp.framework.utils.Constants.*;
@@ -64,7 +64,7 @@ public class WebDriverService {
 		// For Execution Mode
 		if (!context.isLocalExecutionMode()) {
 			// Start a remote WebDriver session
-			currentDriverSession = new RemoteWebDriver(new URL(context.getFrameworkConfigs().getHostUrl()), browser);
+			currentDriverSession = new RemoteWebDriver(new URI(context.getFrameworkConfigs().getHostUrl()).toURL(), browser);
 		} else {
 			// For Debug Mode, launch local driver
 			if (browser.getBrowserName().equals(Browser.CHROME.browserName())) {
