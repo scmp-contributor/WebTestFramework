@@ -120,8 +120,8 @@ public class TestExecutor {
 		String testClassPackagePath = "file:" + TARGET_PATH + File.separator + "test-classes" + File.separator;
 
 		for (String packageName : packageList) {
-			Path testPackagesPath = Paths.get(testClassPackagePath, packageName.replaceAll("\\.", "/"));
-			URI testPackagesUri = testPackagesPath.toUri();
+			// Construct the URI
+			URI testPackagesUri = new URI(testClassPackagePath + packageName.replaceAll("\\.", "/"));
 			testPackagesUrls.add(testPackagesUri.toURL());
 		}
 		return testPackagesUrls;
