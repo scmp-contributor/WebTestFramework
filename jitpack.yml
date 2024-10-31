@@ -1,0 +1,7 @@
+before_install:
+  - sdk install java 23.0.1-oracle
+  - sdk use java 23.0.1-oracle
+  - sdk install maven
+  - mvn -v
+install:
+  - mvn install -DskipTests
