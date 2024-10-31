@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.scmp-contributor</groupId>
 	<artifactId>WebTestFramework</artifactId>
-	<version>4.3.12</version>
+	<version>4.4.0</version>
 	<packaging>jar</packaging>
 
     <properties>
