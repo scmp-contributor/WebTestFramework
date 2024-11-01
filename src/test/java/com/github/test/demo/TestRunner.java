@@ -25,10 +25,10 @@ public class TestRunner extends AbstractTestNGSpringContextTests {
 	 * Set the following environment variables to load the correct configuration:
 	 *
 	 * SPRING_CONFIG_NAME=config.properties
-	 * PROJECT_TEST_PACKAGES=com.scmp.test.pwa
+	 * PROJECT_TEST_PACKAGES=com.github.test.demo
 	 *
 	 * Command line example:
-	 * PROJECT_TEST_PACKAGES=com.scmp.test.drupal SPRING_CONFIG_NAME=config-drupal.properties mvn clean test -Dtest=TestRunner
+	 * PROJECT_TEST_PACKAGES=com.github.test.demo SPRING_CONFIG_NAME=config.properties mvn clean test -Dtest=TestRunner
 	 */
 	@Test
 	public void testApp() throws Exception {
