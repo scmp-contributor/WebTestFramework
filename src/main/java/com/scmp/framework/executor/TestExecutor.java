@@ -87,6 +87,7 @@ public class TestExecutor {
 
 		List<URL> testPackagesUrls = getTestPackagesUrls();
 		Set<Method> testNGTests = findTestMethods(testPackagesUrls);
+		frameworkLogger.info("Total test methods found: {}", testNGTests.size());
 		Map<String, List<Method>> methods = createTestsMap(testNGTests);
 
 		ExecutorService executor = Executors.newCachedThreadPool();
@@ -122,6 +123,7 @@ public class TestExecutor {
 		for (String packageName : packageList) {
 			// Construct the URI
 			URI testPackagesUri = new URI(testClassPackagePath + packageName.replaceAll("\\.", "/"));
+			frameworkLogger.info("Test package URL: {}", testPackagesUri.toURL());
 			testPackagesUrls.add(testPackagesUri.toURL());
 		}
 		return testPackagesUrls;
