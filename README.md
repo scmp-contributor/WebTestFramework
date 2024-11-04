@@ -157,7 +157,6 @@ TestLogger logger = new TestLogger();
   - Upgraded `groovy-xml` 3.0.9
   - Upgraded `org.springframework.boot` 3.3.5
 
-## Changelog
 *4.3.11*
 - **[Bug Fix]**
   - Fixed GA4 hasPostData checking
