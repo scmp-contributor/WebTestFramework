@@ -6,6 +6,7 @@ import com.scmp.framework.testng.listeners.InvokedMethodListener;
 import com.scmp.framework.testng.listeners.SuiteListener;
 import com.scmp.framework.utils.Figlet;
 import io.github.bonigarcia.wdm.WebDriverManager;
+import org.jetbrains.annotations.NotNull;
 import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
 import org.reflections.util.ConfigurationBuilder;
@@ -23,7 +24,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.URI;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -38,9 +42,7 @@ public class TestExecutor {
 
 	@Autowired
 	public TestExecutor(RunTimeContext context) {
-
 		this.context = context;
-
 		if (this.context.isLocalExecutionMode()) {
 			prepareWebDriver();
 		}
@@ -57,15 +59,19 @@ public class TestExecutor {
 		}
 
 		System.setProperty(WDM_CACHE_PATH, context.getFrameworkConfigs().getDriverHome());
-		WebDriverManager manager = WebDriverManager.chromedriver();
-		manager.setup();
-		context.setGlobalVariables(
-				CHROME_DRIVER_PATH, manager.getDownloadedDriverPath());
+		setupWebDriver(WebDriverManager.chromedriver(), CHROME_DRIVER_PATH);
+		setupWebDriver(WebDriverManager.firefoxdriver(), FIREFOX_DRIVER_PATH);
+	}
 
-		manager = WebDriverManager.firefoxdriver();
+	/**
+	 * Setup WebDriver and set global variable
+	 *
+	 * @param manager       WebDriverManager instance
+	 * @param driverPathKey Key for the driver path
+	 */
+	private void setupWebDriver(@NotNull WebDriverManager manager, String driverPathKey) {
 		manager.setup();
-		context.setGlobalVariables(
-				FIREFOX_DRIVER_PATH, manager.getDownloadedDriverPath());
+		context.setGlobalVariables(driverPathKey, manager.getDownloadedDriverPath());
 	}
 
 	/**
@@ -79,41 +85,71 @@ public class TestExecutor {
 		System.out.println("***************************************************");
 		this.packageList.addAll(packages);
 
-		URL testPackagesUrl;
-		List<URL> testPackagesUrls = new ArrayList<>();
-		String testClassPackagePath =
-				"file:" + TARGET_PATH + File.separator + "test-classes" + File.separator;
-
-		// Add URL for each userDefinedTestClasses package
-		for (String packageName : packageList) {
-			testPackagesUrl = new URL(testClassPackagePath + packageName.replaceAll("\\.", "/"));
-			testPackagesUrls.add(testPackagesUrl);
-		}
-
-		// Find test class by annotation: org.testng.annotations.Test.class
-		Reflections reflections =
-				new Reflections(new ConfigurationBuilder().setUrls(testPackagesUrls).setScanners(new MethodAnnotationsScanner()));
-		Set<Method> testNGTests = reflections.getMethodsAnnotatedWith(org.testng.annotations.Test.class);
-
+		List<URL> testPackagesUrls = getTestPackagesUrls();
+		Set<Method> testNGTests = findTestMethods(testPackagesUrls);
+		frameworkLogger.info("Total test methods found: {}", testNGTests.size());
 		Map<String, List<Method>> methods = createTestsMap(testNGTests);
 
 		ExecutorService executor = Executors.newCachedThreadPool();
 		List<FutureTask<Boolean>> list = new ArrayList<>();
 
-		// Available browser types
-		// Chrome, Firefox, Random (if random, either chrome or firefox will be assigned)
 		String[] browsers = context.getFrameworkConfigs().getBrowserType().split(",");
 		for (String browser : browsers) {
-			XmlSuite suite = constructXmlSuite(browser, methods);
+			XmlSuite suite = buildXmlSuite(browser, methods);
 			String suiteFile = writeTestNGFile(suite, "testsuite" + "-" + browser);
 
 			FutureTask<Boolean> futureTask = new FutureTask<>(new TestExecutorService(suiteFile));
 			list.add(futureTask);
-
 			executor.submit(futureTask);
 		}
 
-		// Wait for the test completion
+		boolean hasFailure = waitForTestCompletion(executor, list);
+		Figlet.print("Test Completed");
+
+		return hasFailure;
+	}
+
+	/**
+	 * Get URLs for test packages
+	 *
+	 * @return List of URLs
+	 * @throws Exception exception
+	 */
+	@NotNull
+	private List<URL> getTestPackagesUrls() throws Exception {
+		List<URL> testPackagesUrls = new ArrayList<>();
+		String testClassPackagePath = "file:" + TARGET_PATH + File.separator + "test-classes" + File.separator;
+
+		for (String packageName : packageList) {
+			// Construct the URI
+			URI testPackagesUri = new URI(testClassPackagePath + packageName.replaceAll("\\.", "/"));
+			frameworkLogger.info("Test package URL: {}", testPackagesUri.toURL());
+			testPackagesUrls.add(testPackagesUri.toURL());
+		}
+		return testPackagesUrls;
+	}
+
+	/**
+	 * Find test methods annotated with @Test
+	 *
+	 * @param testPackagesUrls List of URLs
+	 * @return Set of Methods
+	 */
+	private Set<Method> findTestMethods(List<URL> testPackagesUrls) {
+		Reflections reflections = new Reflections(new ConfigurationBuilder().setUrls(testPackagesUrls).setScanners(new MethodAnnotationsScanner()));
+		return reflections.getMethodsAnnotatedWith(org.testng.annotations.Test.class);
+	}
+
+	/**
+	 * Wait for the test completion
+	 *
+	 * @param executor ExecutorService
+	 * @param list     List of FutureTask
+	 * @return boolean indicating if there was any failure
+	 * @throws InterruptedException exception
+	 * @throws ExecutionException   exception
+	 */
+	private boolean waitForTestCompletion(ExecutorService executor, @NotNull List<FutureTask<Boolean>> list) throws InterruptedException, ExecutionException {
 		while (true) {
 			boolean isDone = true;
 			for (FutureTask<Boolean> futureTask : list) {
@@ -121,7 +157,6 @@ public class TestExecutor {
 			}
 
 			if (isDone) {
-				// Shutdown executor service
 				executor.shutdown();
 				break;
 			} else {
@@ -130,13 +165,9 @@ public class TestExecutor {
 		}
 
 		boolean hasFailure = false;
-		//  Get the result
 		for (FutureTask<Boolean> result : list) {
 			hasFailure = hasFailure || result.get();
 		}
-
-		Figlet.print("Test Completed");
-
 		return hasFailure;
 	}
 
@@ -147,51 +178,57 @@ public class TestExecutor {
 	 * @param methods test methods
 	 * @return XML suite
 	 */
-	public XmlSuite constructXmlSuite(String browser, Map<String, List<Method>> methods) {
-		ArrayList<String> listeners = new ArrayList<>();
-		ArrayList<String> groupsInclude = new ArrayList<>();
-		ArrayList<String> groupsExclude = new ArrayList<>();
+	public XmlSuite buildXmlSuite(String browser, Map<String, List<Method>> methods) {
+		XmlSuite suite = initializeXmlSuite();
+		XmlTest test = initializeXmlTest(suite, browser);
 
-		// Add groups
-		Collections.addAll(
-				groupsInclude,
-				context.getFrameworkConfigs().getIncludeGroups().split("\\s*,\\s*"));
-		Collections.addAll(
-				groupsExclude,
-				context.getFrameworkConfigs().getExcludeGroups().split("\\s*,\\s*"));
+		test.setXmlClasses(createXmlClassList(methods));
+		return suite;
+	}
 
-		// Initialize XML Suite
+	/**
+	 * Initialize XML Suite
+	 *
+	 * @return XML Suite
+	 */
+	@NotNull
+	private XmlSuite initializeXmlSuite() {
 		XmlSuite suite = new XmlSuite();
 		suite.setName("Test Suite");
 		suite.setPreserveOrder(true);
-
-		/*
-		 *  Set parallel mode to METHODS level
-		 *  Each method will be taken care of by 1 thread
-		 */
 		suite.setThreadCount(context.getFrameworkConfigs().getThreadCount());
 		suite.setDataProviderThreadCount(context.getFrameworkConfigs().getDataProviderThreadCount());
 		suite.setParallel(ParallelMode.METHODS);
-		// Additional output, including test class and method names.
 		suite.setVerbose(2);
 
-		// Add listeners
-		listeners.add(SuiteListener.class.getName());
-		listeners.add(InvokedMethodListener.class.getName());
-		listeners.add(AnnotationTransformerListener.class.getName());
+		List<String> listeners = Arrays.asList(
+				SuiteListener.class.getName(),
+				InvokedMethodListener.class.getName(),
+				AnnotationTransformerListener.class.getName()
+		);
 		suite.setListeners(listeners);
+		return suite;
+	}
 
-		// Initialize the XML Test Suite
+	/**
+	 * Initialize XML Test
+	 *
+	 * @param suite   XML Suite
+	 * @param browser Browser name
+	 * @return XML Test
+	 */
+	@NotNull
+	private XmlTest initializeXmlTest(XmlSuite suite, String browser) {
 		XmlTest test = new XmlTest(suite);
 		test.setName("Automated Test");
 		test.addParameter("browser", browser);
+
+		List<String> groupsInclude = Arrays.asList(context.getFrameworkConfigs().getIncludeGroups().split("\\s*,\\s*"));
+		List<String> groupsExclude = Arrays.asList(context.getFrameworkConfigs().getExcludeGroups().split("\\s*,\\s*"));
+
 		test.setIncludedGroups(groupsInclude);
 		test.setExcludedGroups(groupsExclude);
-
-		// Add test class and methods
-		test.setXmlClasses(createXmlClasses(methods));
-
-		return suite;
+		return test;
 	}
 
 	/**
@@ -201,14 +238,11 @@ public class TestExecutor {
 	 * @param methods all available test methods
 	 * @return TestNG XML class list
 	 */
-	public List<XmlClass> createXmlClasses(Map<String, List<Method>> methods) {
-
-		return methods.keySet().stream().map(className -> {
-			if (!className.contains("TestRunner")) {
-				return new XmlClass(className);
-			}
-			return null;
-		}).filter(Objects::nonNull).collect(Collectors.toList());
+	public List<XmlClass> createXmlClassList(@NotNull Map<String, List<Method>> methods) {
+		return methods.keySet().stream()
+				.filter(className -> !className.contains("TestRunner"))
+				.map(XmlClass::new)
+				.collect(Collectors.toList());
 	}
 
 	/**
@@ -218,18 +252,15 @@ public class TestExecutor {
 	 * @param fileName file name to be created
 	 * @return full file path of the xml file
 	 */
-	private String writeTestNGFile(XmlSuite suite, String fileName) {
-		// Print out Suite XML
+	@NotNull
+	private String writeTestNGFile(@NotNull XmlSuite suite, String fileName) {
 		System.out.println(suite.toXml());
 		String suiteXML = System.getProperty("user.dir") + "/target/" + fileName + ".xml";
 
-		try {
-			FileWriter writer = new FileWriter(suiteXML);
+		try (FileWriter writer = new FileWriter(suiteXML)) {
 			writer.write(suite.toXml());
-			writer.flush();
-			writer.close();
 		} catch (IOException e) {
-			frameworkLogger.error("Ops!", e);
+			frameworkLogger.error("Failed to write TestNG suite file", e);
 		}
 
 		return suiteXML;
@@ -241,23 +272,12 @@ public class TestExecutor {
 	 * @param methods all testng tests
 	 * @return test class, test method map
 	 */
-	public Map<String, List<Method>> createTestsMap(Set<Method> methods) {
+	public Map<String, List<Method>> createTestsMap(@NotNull Set<Method> methods) {
 		Map<String, List<Method>> testsMap = new HashMap<>();
-		methods.forEach(
-				method -> {
-					// Get method list from specific test class
-					String className =
-							method.getDeclaringClass().getPackage().getName()
-									+ "."
-									+ method.getDeclaringClass().getSimpleName();
-
-					// If the method list is empty, initialize it and add it to test class map
-					List<Method> methodsList =
-							testsMap.computeIfAbsent(className, k -> new ArrayList<>());
-					// Add method to list
-					methodsList.add(method);
-				});
-
+		methods.forEach(method -> {
+			String className = method.getDeclaringClass().getPackage().getName() + "." + method.getDeclaringClass().getSimpleName();
+			testsMap.computeIfAbsent(className, k -> new ArrayList<>()).add(method);
+		});
 		return testsMap;
 	}
 }
@@ -271,8 +291,7 @@ class TestExecutorService implements Callable<Boolean> {
 
 	@Override
 	public Boolean call() {
-		List<String> suiteFiles = new ArrayList<>();
-		suiteFiles.add(suite);
+		List<String> suiteFiles = Collections.singletonList(suite);
 
 		TestNG testNG = new TestNG();
 		testNG.setTestSuites(suiteFiles);

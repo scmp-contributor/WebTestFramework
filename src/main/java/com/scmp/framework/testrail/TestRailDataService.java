@@ -18,6 +18,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * TestRailDataService - Manages the interaction with TestRail for uploading test results and attachments.
+ */
 public class TestRailDataService {
 	private static final Logger frameworkLogger = LoggerFactory.getLogger(TestRailDataService.class);
 
@@ -35,6 +38,9 @@ public class TestRailDataService {
 		this.initTestResultForUploadAttachments();
 	}
 
+	/**
+	 * Initialize the test result for uploading attachments.
+	 */
 	private void initTestResultForUploadAttachments() {
 		ApplicationContext context = ApplicationContextProvider.getApplicationContext();
 		this.testRailManager = context.getBean(TestRailManager.class);
@@ -57,29 +63,29 @@ public class TestRailDataService {
 	}
 
 	/**
-	 * Add Test Step Result
+	 * Add a test step result to the list and upload the attachment if provided.
 	 *
-	 * @param status
-	 * @param content
-	 * @param filePath
+	 * @param status   the status of the test step
+	 * @param content  the content of the test step
+	 * @param filePath the file path of the attachment
 	 */
 	public void addStepResult(int status, String content, String filePath) {
 		final CustomStepResult stepResult = new CustomStepResult(content, status);
 		testRailCustomStepResultList.add(stepResult);
 
-		if (filePath!=null) {
+		if (filePath != null) {
 			this.taskExecuterService.submit(() -> {
 				try {
-					// Wait for test result for attachment ready
+					// Wait for test result for attachment to be ready
 					initializationLatch.await();
 
-					frameworkLogger.info("Uploading attachment: " + filePath);
+					frameworkLogger.info("Uploading attachment: {}", filePath);
 					Attachment attachment =
 							testRailManager.addAttachmentToTestResult(testResultForUploadAttachments.getId(), filePath);
 
 					String attachmentRef =
 							String.format(Attachment.ATTACHMENT_REF_STRING, attachment.getAttachmentId());
-					frameworkLogger.info("Attachment uploaded: " + attachmentRef);
+					frameworkLogger.info("Attachment uploaded: {}", attachmentRef);
 					stepResult.setContent(stepResult.getContent() + " \n " + attachmentRef);
 				} catch (Exception e) {
 					frameworkLogger.error("Failed to upload attachment.", e);
@@ -89,10 +95,10 @@ public class TestRailDataService {
 	}
 
 	/**
-	 * Upload data to Test Rail
+	 * Upload the collected test data to TestRail.
 	 *
-	 * @param finalTestResult
-	 * @param elapsedInSecond
+	 * @param finalTestResult the final status of the test
+	 * @param elapsedInSecond the elapsed time of the test in seconds
 	 */
 	public void uploadDataToTestRail(int finalTestResult, long elapsedInSecond) {
 		// Shut down the ExecutorService to reject new tasks
@@ -110,10 +116,6 @@ public class TestRailDataService {
 		} catch (InterruptedException e) {
 			frameworkLogger.error("Ops!", e);
 		}
-
-//    frameworkLogger.info("========RESULT CONTENT==========");
-//    testRailCustomStepResultList.forEach(result -> {frameworkLogger.info(result.getContent());});
-//    frameworkLogger.info("================================");
 
 		AddTestResultRequest request =
 				new AddTestResultRequest(
