@@ -131,11 +131,7 @@ public class GoogleAnalytics4 extends AbstractTrackingData {
 			} else {
 				isParametersEqual.set(false);
 			}
-		} else if (this.parameters == null && that.parameters == null) {
-			isParametersEqual.set(true);
-		} else {
-			isParametersEqual.set(false);
-		}
+		} else isParametersEqual.set(this.parameters == null && that.parameters == null);
 
 		return isQueryEqual && isParametersEqual.get();
 	}

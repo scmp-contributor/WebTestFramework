@@ -77,7 +77,7 @@ public class ExtentManager {
 		try {
 			htmlReporter.loadXMLConfig(extentXML);
 		} catch (Exception e) {
-			frameworkLogger.error("Failed to load extent.xml from " + extentXML, e);
+			frameworkLogger.error("Failed to load extent.xml from {}", extentXML, e);
 			loadDefaultConfig(htmlReporter);
 		}
 	}

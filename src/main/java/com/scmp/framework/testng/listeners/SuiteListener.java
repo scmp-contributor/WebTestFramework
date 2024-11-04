@@ -84,7 +84,7 @@ public class SuiteListener implements ISuiteListener {
 	}
 
 	/**
-	 * Setup a Test Run in TestRail.
+	 * Set up a Test Run in TestRail.
 	 *
 	 * @param suite the test suite
 	 * @throws IOException if an I/O error occurs

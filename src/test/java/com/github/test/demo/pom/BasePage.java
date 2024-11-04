@@ -82,9 +82,8 @@ public abstract class BasePage {
 
 	public WebElement waitForElement(WebElement arg) {
 		waitForPageToLoad(arg);
-		WebElement el = arg;
 
-		return el;
+		return arg;
 	}
 
 	public boolean isElementPresent(By by) {

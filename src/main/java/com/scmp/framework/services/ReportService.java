@@ -163,7 +163,7 @@ public class ReportService {
 	}
 
 	/**
-	 * Setup the report for a test set.
+	 * Set up the report for a test set.
 	 *
 	 * @param testInfo test information
 	 */

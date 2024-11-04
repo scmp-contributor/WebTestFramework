@@ -84,7 +84,7 @@ public class TestLogger {
 	 * @param message the message to log
 	 */
 	public void logPass(String message) {
-		frameworkLogger.info("[PASSED] " + message);
+		frameworkLogger.info(message);
 		reportService.logPass(message);
 	}
 
@@ -94,7 +94,7 @@ public class TestLogger {
 	 * @param message the message to log
 	 */
 	public void logPassWithScreenshot(String message) {
-		frameworkLogger.info("[PASSED] " + message);
+		frameworkLogger.info(message);
 		reportService.logPassWithScreenshot(message);
 	}
 
@@ -104,7 +104,7 @@ public class TestLogger {
 	 * @param message the message to log
 	 */
 	public void logFail(String message) {
-		frameworkLogger.error("[FAILED] " + message);
+		frameworkLogger.error(message);
 		reportService.logFail(message);
 	}
 
@@ -114,7 +114,7 @@ public class TestLogger {
 	 * @param message the message to log
 	 */
 	public void logFailWithoutScreenshot(String message) {
-		frameworkLogger.error("[FAILED] " + message);
+		frameworkLogger.error(message);
 		reportService.logFailWithoutScreenshot(message);
 	}
 
@@ -125,7 +125,7 @@ public class TestLogger {
 	 * @param imagePath the file path of the image
 	 */
 	public void logFailWithImage(String message, String imagePath) {
-		frameworkLogger.error("[FAILED] " + message);
+		frameworkLogger.error(message);
 		reportService.logFailWithImage(message, imagePath);
 	}
 
@@ -135,7 +135,7 @@ public class TestLogger {
 	 * @param message the message to log
 	 */
 	public void logFatalError(String message) {
-		frameworkLogger.error("[ERROR] " + message);
+		frameworkLogger.error(message);
 		Assert.fail(message);
 	}
 

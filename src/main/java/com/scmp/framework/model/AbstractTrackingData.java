@@ -3,8 +3,10 @@ package com.scmp.framework.model;
 import lombok.Getter;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -34,7 +36,8 @@ public abstract class AbstractTrackingData {
 	 */
 	public void parse(String url) {
 		try {
-			this.variables = this.splitQuery(new URL(url));
+			URI uri = new URI(url);
+			this.variables = this.splitQuery(uri.toURL());
 		} catch (Exception e) {
 			throw new RuntimeException("Unable to parse URL: " + url, e);
 		}
@@ -55,9 +58,9 @@ public abstract class AbstractTrackingData {
 		for (String pair : pairs) {
 			int idx = pair.indexOf("=");
 			if (idx < 0) {
-				queryPairs.put(URLDecoder.decode(pair, "UTF-8"), "");
+				queryPairs.put(URLDecoder.decode(pair, StandardCharsets.UTF_8), "");
 			} else {
-				queryPairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+				queryPairs.put(URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8), URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8));
 			}
 		}
 

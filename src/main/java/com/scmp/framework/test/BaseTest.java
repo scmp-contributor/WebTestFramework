@@ -54,7 +54,7 @@ public class BaseTest {
 			output.append(random.nextInt(10));
 		}
 
-		frameworkLogger.info("Generated random Number String: {}", output.toString());
+		frameworkLogger.info("Generated random Number String: {}", output);
 		return output.toString();
 	}
 

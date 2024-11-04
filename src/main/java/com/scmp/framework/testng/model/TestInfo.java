@@ -52,7 +52,7 @@ public class TestInfo {
 	private final Method declaredMethod;
 	private Browser browserType = null;
 	private TestRailDataService testRailDataService = null;
-	private LocalDateTime testStartTime = null;
+	private final LocalDateTime testStartTime;
 	private LocalDateTime testEndTime = null;
 	private Boolean isSkippedTest = null;
 	private final RunTimeContext runTimeContext;
@@ -115,6 +115,7 @@ public class TestInfo {
 			}
 
 			long elapsed = Duration.between(this.testStartTime, this.testEndTime).getSeconds();
+			elapsed = elapsed == 0 ? 1 : elapsed;
 			this.testRailDataService.uploadDataToTestRail(finalTestResult, elapsed);
 		}
 	}
@@ -226,11 +227,11 @@ public class TestInfo {
 		}
 
 		String browserTypeParam = this.testNGInvokedMethod.getTestMethod().getXmlTest().getParameter("browser");
-		Browser configBrowserType = null;
+		Browser configBrowserType;
 		try {
 			configBrowserType = Browser.valueOf(browserTypeParam.toUpperCase());
 		} catch (Exception e) {
-			throw new RuntimeException("Unsupported browser: " + configBrowserType);
+			throw new RuntimeException("Unsupported browser: " + browserTypeParam.toUpperCase());
 		}
 
 		// Override browser type
@@ -315,11 +316,15 @@ public class TestInfo {
 
 		// headless mode
 		HeadlessMode headlessMode = this.declaredMethod.getAnnotation(HeadlessMode.class);
-		options.setHeadless(headlessMode != null);
+		// If headless mode is not specified, use the global headless mode
+		if (headlessMode == null || headlessMode.status()) {
+			options.addArguments("--headless=new");
+		}
 
 		// Accept untrusted certificates
 		AcceptUntrustedCertificates acceptUntrustedCertificates = this.declaredMethod.getAnnotation(AcceptUntrustedCertificates.class);
-		options.setAcceptInsecureCerts(acceptUntrustedCertificates != null);
+		// If acceptUntrustedCertificates is not specified, use the global acceptUntrustedCertificates
+		options.setAcceptInsecureCerts(acceptUntrustedCertificates == null || acceptUntrustedCertificates.status());
 
 		// Capture network traffic
 		CaptureNetworkTraffic4Chrome captureNetworkTraffic4Chrome = this.declaredMethod.getAnnotation(CaptureNetworkTraffic4Chrome.class);
@@ -388,11 +393,15 @@ public class TestInfo {
 
 		// headless mode
 		HeadlessMode headlessMode = this.declaredMethod.getAnnotation(HeadlessMode.class);
-		options.setHeadless(headlessMode != null);
+		// If headless mode is not specified, use the global headless mode
+		if (headlessMode == null || headlessMode.status()) {
+			options.addArguments("--headless=new");
+		}
 
 		// Accept untrusted certificates
 		AcceptUntrustedCertificates acceptUntrustedCertificates = this.declaredMethod.getAnnotation(AcceptUntrustedCertificates.class);
-		options.setAcceptInsecureCerts(acceptUntrustedCertificates != null);
+		// If acceptUntrustedCertificates is not specified, use the global acceptUntrustedCertificates
+		options.setAcceptInsecureCerts(acceptUntrustedCertificates == null || acceptUntrustedCertificates.status());
 
 		return options;
 	}
@@ -404,14 +413,11 @@ public class TestInfo {
 	 */
 	public MutableCapabilities getBrowserOption() {
 		Browser browserType = this.getBrowserType();
-		switch (browserType) {
-			case CHROME:
-				return this.getChromeOptions();
-			case FIREFOX:
-				return this.getFirefoxOptions();
-			default:
-				throw new RuntimeException("Unsupported browser: " + browserType);
-		}
+		return switch (browserType) {
+			case CHROME -> this.getChromeOptions();
+			case FIREFOX -> this.getFirefoxOptions();
+			default -> throw new RuntimeException("Unsupported browser: " + browserType);
+		};
 	}
 
 	/**

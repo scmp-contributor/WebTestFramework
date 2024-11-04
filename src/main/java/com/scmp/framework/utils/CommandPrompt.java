@@ -100,8 +100,8 @@ public class CommandPrompt {
 	/**
 	 * StreamDrainer - Runnable class for draining input streams.
 	 */
-	class StreamDrainer implements Runnable {
-		private BufferedReader reader;
+	static class StreamDrainer implements Runnable {
+		private final BufferedReader reader;
 
 		public StreamDrainer(BufferedReader ins) {
 			this.reader = ins;
