@@ -137,6 +137,10 @@ TestLogger logger = new TestLogger();
 | `String captureScreen()`         | Returning the file path of the screenshot              |
 
 ## Changelog
+*4.4.1*
+- **[Bug Fix]**
+  - Fixed TestRail attachment upload exception
+
 *4.4.0*
 - **[Bug Fix]**
   - Fixed NullpointerException when no TestRail test cases matched if TESTRAIL_INCLUDE_ALL_AUTOMATED_TEST_CASES=false
