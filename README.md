@@ -140,6 +140,7 @@ TestLogger logger = new TestLogger();
 *4.4.0*
 - **[Bug Fix]**
   - Fixed NullpointerException when no TestRail test cases matched if TESTRAIL_INCLUDE_ALL_AUTOMATED_TEST_CASES=false
+  - Fixed TestRail report error when execution time is less than 1 second
 - **[Enhancement]**
   - Improve code readability
   - Upgrade to JDK 23
