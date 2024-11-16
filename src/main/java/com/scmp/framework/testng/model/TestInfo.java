@@ -39,8 +39,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Level;
 
-import static com.scmp.framework.utils.Constants.FILTERED_TEST_OBJECT;
-import static com.scmp.framework.utils.Constants.TEST_RUN_OBJECT;
+import static com.scmp.framework.utils.Constants.*;
 
 /**
  * TestInfo - Holds information about the current test being executed.
@@ -317,8 +316,29 @@ public class TestInfo {
 		// headless mode
 		HeadlessMode headlessMode = this.declaredMethod.getAnnotation(HeadlessMode.class);
 		// If headless mode is not specified, use the global headless mode
+		int majorVersion = 0;
 		if (headlessMode == null || headlessMode.status()) {
-			options.addArguments("--headless=new");
+			// Get version from config if using remote selenium server
+			if (!runTimeContext.isLocalExecutionMode()) {
+				majorVersion = runTimeContext.getFrameworkConfigs().getRemoteDriverVersion();
+			} else {
+				// Get local driver version
+				String version = runTimeContext.getGlobalVariables(CHROME_DRIVER_VERSION).toString();
+				// Split the version string to get the major version
+				String[] versionParts = version.split("\\.");
+				if (versionParts.length > 0) {
+					majorVersion = Integer.parseInt(versionParts[0]);
+				}
+			}
+
+			// Check if the major version is greater than 109
+			if (majorVersion >= 109) {
+				options.addArguments("--headless=new");
+			} else if (majorVersion >= 96) {
+				options.addArguments("--headless=chrome");
+			} else {
+				/* do nothing */
+			}
 		}
 
 		// Accept untrusted certificates
