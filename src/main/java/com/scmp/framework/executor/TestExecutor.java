@@ -59,19 +59,28 @@ public class TestExecutor {
 		}
 
 		System.setProperty(WDM_CACHE_PATH, context.getFrameworkConfigs().getDriverHome());
-		setupWebDriver(WebDriverManager.chromedriver(), CHROME_DRIVER_PATH);
-		setupWebDriver(WebDriverManager.firefoxdriver(), FIREFOX_DRIVER_PATH);
+		setupWebDriver(WebDriverManager.chromedriver(), CHROME_DRIVER_PATH, CHROME_DRIVER_VERSION);
+		setupWebDriver(WebDriverManager.firefoxdriver(), FIREFOX_DRIVER_PATH, FIREFOX_DRIVER_VERSION);
 	}
 
 	/**
 	 * Setup WebDriver and set global variable
 	 *
-	 * @param manager       WebDriverManager instance
-	 * @param driverPathKey Key for the driver path
+	 * @param manager       	WebDriverManager instance
+	 * @param driverPathKey 	Key for the driver path
+	 * @param driverVersionKey 	Key for the driver version
 	 */
-	private void setupWebDriver(@NotNull WebDriverManager manager, String driverPathKey) {
+	private void setupWebDriver(@NotNull WebDriverManager manager, String driverPathKey, String driverVersionKey) {
 		manager.setup();
-		context.setGlobalVariables(driverPathKey, manager.getDownloadedDriverPath());
+		String driverPath = manager.getDownloadedDriverPath();
+		String driverVersion = manager.getDownloadedDriverVersion();
+
+		// Set global variables for driver path and version
+		context.setGlobalVariables(driverPathKey, driverPath);
+		context.setGlobalVariables(driverVersionKey, driverVersion);
+
+		// Log both driver path and version in a consolidated message
+		frameworkLogger.info("WebDriver downloaded - Path: {}, Version: {}", driverPath, driverVersion);
 	}
 
 	/**

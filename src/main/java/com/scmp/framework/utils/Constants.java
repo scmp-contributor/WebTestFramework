@@ -19,6 +19,10 @@ public class Constants {
 	public static final String CHROME_DRIVER_PATH = "CHROME_DRIVER_PATH";
 	public static final String FIREFOX_DRIVER_PATH = "FIREFOX_DRIVER_PATH";
 
+	// WebDriver Version
+	public static final String CHROME_DRIVER_VERSION = "CHROME_DRIVER_VERSION";
+	public static final String FIREFOX_DRIVER_VERSION = "FIREFOX_DRIVER_VERSION";
+
 	// Keys for Global Variables
 	public static final String TEST_INFO_OBJECT = "TEST_INFO_OBJECT";
 	public static final String TEST_RUN_OBJECT = "TEST_RUN_OBJECT";

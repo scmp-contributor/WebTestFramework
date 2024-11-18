@@ -54,6 +54,9 @@ URL=<your testing url> INCLUDE_GROUPS=<your runtime include groups> mvn clean te
 BROWSER_TYPE=random
 # Selenium hub in docker server
 HOST_URL=http://localhost:4444/wd/hub
+# REMOTE_DRIVER_VERSION: version of the browser driver in selenium hub 
+# resolving headless mode issue for different browser versions
+REMOTE_DRIVER_VERSION=94
 
 ####################### FRAMEWORK ###########################################
 FRAMEWORK=testng
@@ -137,6 +140,10 @@ TestLogger logger = new TestLogger();
 | `String captureScreen()`         | Returning the file path of the screenshot              |
 
 ## Changelog
+*4.4.2*
+- **[Bug Fix]**
+  - Fixed Headless mode issue for Chrome in older versions
+  
 *4.4.1*
 - **[Bug Fix]**
   - Fixed TestRail attachment upload exception
