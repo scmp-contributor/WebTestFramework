@@ -36,7 +36,7 @@ public class FrameworkConfigs {
 	@Value("${HOST_URL:#{''}}")
 	private String hostUrl;
 
-	@Value("${REMOTE_DRIVER_VERSION:#{''}}")
+	@Value("${REMOTE_DRIVER_VERSION:#{0}}")
 	private int remoteDriverVersion;
 
 	@Value("${GLOBAL_CHROME_OPTIONS::#{''}}")
