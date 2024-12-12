@@ -19,10 +19,7 @@ import org.testng.ISuiteListener;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -50,10 +47,12 @@ public class SuiteListener implements ISuiteListener {
 	public void onFinish(ISuite suite) {
 		// Log the completion of the test suite execution
 		frameworkLogger.info("Test Suite execution completed.");
+		logConsecutiveFailedTestCase();
 	}
 
 	@Override
 	public void onStart(ISuite suite) {
+		logConsecutiveFailedTestCase();
 		// Check if TestRail upload is enabled in the configuration
 		if (frameworkConfigs.isTestRailUploadTestResult()) {
 			try {
@@ -195,6 +194,7 @@ public class SuiteListener implements ISuiteListener {
 		String timestamp = String.valueOf(today.minusDays(10).atStartOfDay(runTimeContext.getZoneId()).toEpochSecond());
 		HashSet<Integer> failedTestCasesIdSet = new HashSet<>();
 		boolean isFirstRunLoop = true;
+		Map<Integer, String> finalResultMap = new HashMap<>();
 
 		try {
 
@@ -206,26 +206,31 @@ public class SuiteListener implements ISuiteListener {
 
 			// Search for consecutive failed test cases
 			for (TestRun run : runs){
-				List<Integer> failedTests = testRailManager.getAllTestRunTests(run.getId(), String.valueOf(TestRailStatus.Failed))
+				Map<Integer, String> runResult = testRailManager.getAllTestRunTests(run.getId(), String.valueOf(TestRailStatus.Failed))
 						.stream()
-						.map(TestRunTest::getCaseId)
-						.toList();
+						.collect(Collectors.toMap(TestRunTest::getCaseId, TestRunTest::getTitle));
 
 				if(isFirstRunLoop){
-					failedTestCasesIdSet.addAll(failedTests);
+					failedTestCasesIdSet.addAll(runResult.keySet());
+					finalResultMap = runResult;
 					isFirstRunLoop = false;
 				}else{
-					failedTestCasesIdSet.retainAll(failedTests);
+					failedTestCasesIdSet.retainAll(runResult.keySet());
 				}
 			}
 
+			// Remove those test that are failed first time only but not consecutive times
+			finalResultMap.keySet().removeIf(testId -> !failedTestCasesIdSet.contains(testId));
+
 			// Display list
-			frameworkLogger.info("Consecutive failed test cases: {}", failedTestCasesIdSet);
+			if(!finalResultMap.isEmpty()){
+				frameworkLogger.info("Consecutive failed test cases on master branch: ");
+				finalResultMap.forEach((k,v) -> frameworkLogger.info("Test Case ID: {}, Title: {}", k, v));
+			}
 
 
 		}catch (IOException e){
 			throw new RuntimeException(e);
 		}
-
 	}
 }
