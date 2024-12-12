@@ -6,6 +6,7 @@ import com.scmp.framework.context.ApplicationContextProvider;
 import com.scmp.framework.context.FrameworkConfigs;
 import com.scmp.framework.context.RunTimeContext;
 import com.scmp.framework.testrail.TestRailManager;
+import com.scmp.framework.testrail.TestRailStatus;
 import com.scmp.framework.testrail.models.TestRun;
 import com.scmp.framework.testrail.models.TestRunResult;
 import com.scmp.framework.testrail.models.TestRunTest;
@@ -18,6 +19,7 @@ import org.testng.ISuiteListener;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -179,5 +181,51 @@ public class SuiteListener implements ISuiteListener {
 		} else {
 			frameworkLogger.warn("No Test Run created as no test cases were found.");
 		}
+	}
+
+	/**
+	 * Log consecutive failed test cases on master branch
+	 * */
+	private void logConsecutiveFailedTestCase(){
+
+		String projectId = frameworkConfigs.getTestRailProjectId();
+
+		// Timestamp 10 days before
+		LocalDate today = LocalDate.now(runTimeContext.getZoneId());
+		String timestamp = String.valueOf(today.minusDays(10).atStartOfDay(runTimeContext.getZoneId()).toEpochSecond());
+		HashSet<Integer> failedTestCasesIdSet = new HashSet<>();
+		boolean isFirstRunLoop = true;
+
+		try {
+
+			// Get the latest 3 test runs with the name containing "master"
+			List<TestRun> runs = testRailManager.getTestRuns(projectId,timestamp).getTestRunList().stream()
+					.filter(testRun -> testRun.getName().contains("master"))
+					.limit(3)
+					.toList();
+
+			// Search for consecutive failed test cases
+			for (TestRun run : runs){
+				List<Integer> failedTests = testRailManager.getAllTestRunTests(run.getId(), String.valueOf(TestRailStatus.Failed))
+						.stream()
+						.map(TestRunTest::getCaseId)
+						.toList();
+
+				if(isFirstRunLoop){
+					failedTestCasesIdSet.addAll(failedTests);
+					isFirstRunLoop = false;
+				}else{
+					failedTestCasesIdSet.retainAll(failedTests);
+				}
+			}
+
+			// Display list
+			frameworkLogger.info("Consecutive failed test cases: {}", failedTestCasesIdSet);
+
+
+		}catch (IOException e){
+			throw new RuntimeException(e);
+		}
+
 	}
 }
