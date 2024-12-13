@@ -152,6 +152,10 @@ TestLogger logger = new TestLogger();
 | `String captureScreen()`         | Returning the file path of the screenshot              |
 
 ## Changelog
+*4.4.3*
+- **[Enhancement]**
+  - Add logic to filter and show consecutive fail Testrail test case
+  
 *4.4.2*
 - **[Bug Fix]**
   - Fixed Headless mode issue for Chrome in older versions
