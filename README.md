@@ -100,6 +100,18 @@ FEATURE_DESCRIPTION=
 DRIVER_HOME=drivers
 # With local execution mode(debug mode) ON, browser will be launched locally using driver in DRIVER_HOME
 LOCAL_EXECUTION=ON
+
+######################## FAILED_TESTCASE_NOTIFICATION ########################
+# NOTIFICATION_SEND_FAILED_CASE => Whether send fail case notification or not
+NOTIFICATION_SEND_FAILED_CASE=false
+# NOTIFICATION_FAILED_CASE_TESTRUN_PATTERN.regexp => Regex to search failed case for test run
+NOTIFICATION_FAILED_CASE_TESTRUN_PATTERN.regexp=Automated Test Run \d{1,2}/\d{1,2}/\d{4} master
+# NOTIFICATION_TESTRUN_COUNT => Number of test run to search for failed case
+NOTIFICATION_TESTRUN_COUNT=3
+# NOTIFICATION_FAILED_CASE_TESTRUN_WITHIN_DAYS => Filter test run within day period
+NOTIFICATION_FAILED_CASE_TESTRUN_WITHIN_DAYS=10
+# NOTIFICATION_FAILED_CASE_EXCLUDE_LIST => Exclude test case id from notification
+NOTIFICATION_FAILED_CASE_EXCLUDE_LIST=1701,1778,1779,1780,1781,1782,1783,1714,1701,1923,1797,1927,1800
 ```
 
 ### Useful Annotations

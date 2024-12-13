@@ -17,6 +17,8 @@ import org.springframework.context.ApplicationContext;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
 
+import com.slack.api.Slack;
+
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
@@ -188,9 +190,13 @@ public class SuiteListener implements ISuiteListener {
 	}
 
 	/**
-	 * Log consecutive failed test cases on master branch
-	 * */
-	private void logConsecutiveFailedTestCase(){
+	 * Log consecutive failed test cases on master branch:
+	 * 1. It will search the latest ${NOTIFICATION_TESTRUN_COUNT} test runs with format ${NOTIFICATION_FAILED_CASE_TESTRUN_PATTERN.regexp} within ${NOTIFICATION_FAILED_CASE_TESTRUN_WITHIN_DAYS} days based on the configuration.
+	 * 2. For each test run, it will filter the failed case
+	 * 3. Filter out which test cases are not in all test runs and remove it from the final list
+	 * 4. Filter out which test cases are in the exclude list and remove it from the final list
+	 */
+	private void logConsecutiveFailedTestCase() {
 
 		String projectId = frameworkConfigs.getTestRailProjectId();
 
@@ -206,16 +212,16 @@ public class SuiteListener implements ISuiteListener {
 			Pattern matchTestRunPattern = Pattern.compile(frameworkConfigs.getFailedCaseTestRunNotificationPattern());
 
 			// Get the latest x test runs and match with pattern set in configuration
-			List<TestRun> runs = testRailManager.getTestRuns(projectId,timestamp).getTestRunList().stream()
+			List<TestRun> runs = testRailManager.getTestRuns(projectId, timestamp).getTestRunList().stream()
 					.filter(testRun -> matchTestRunPattern.matcher(testRun.getName()).find())
 					.limit(frameworkConfigs.getFailedCaseNotificationCount())
 					.toList();
 
 			// Search for consecutive failed test cases
-			for (TestRun run : runs){
+			for (TestRun run : runs) {
 
 				// Skip listing if the test run is in progress
-				if(!testRailManager.getAllTestRunTests(run.getId(), String.valueOf(TestRailStatus.IN_PROGRESS)).isEmpty()){
+				if (!testRailManager.getAllTestRunTests(run.getId(), String.valueOf(TestRailStatus.IN_PROGRESS)).isEmpty()) {
 					return;
 				}
 
@@ -224,11 +230,11 @@ public class SuiteListener implements ISuiteListener {
 						.stream()
 						.collect(Collectors.toMap(TestRunTest::getCaseId, TestRunTest::getTitle));
 
-				if(isFirstRunLoop){
+				if (isFirstRunLoop) {
 					failedTestCasesIdSet.addAll(runResult.keySet());
-					finalResultMap = runResult;
+					finalResultMap.putAll(runResult);
 					isFirstRunLoop = false;
-				}else{
+				} else {
 					failedTestCasesIdSet.retainAll(runResult.keySet());
 				}
 			}
@@ -242,14 +248,14 @@ public class SuiteListener implements ISuiteListener {
 
 
 			// Display list
-			if(!finalResultMap.isEmpty()){
+			if (!finalResultMap.isEmpty()) {
 				frameworkLogger.info("Consecutive failed test cases: ");
-				finalResultMap.forEach((k,v) -> frameworkLogger.info("Test Case ID: {}, Title: {}", k, v));
-			}else{
+				finalResultMap.forEach((k, v) -> frameworkLogger.info("Test Case ID: {}, Title: {}", k, v));
+			} else {
 				frameworkLogger.info("No consecutive failed test cases found.");
 			}
 
-		}catch (Exception e){
+		} catch (Exception e) {
 			frameworkLogger.error("Failed to get consecutive failed test cases", e);
 		}
 	}
