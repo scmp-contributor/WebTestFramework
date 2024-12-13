@@ -111,7 +111,7 @@ NOTIFICATION_TESTRUN_COUNT=3
 # NOTIFICATION_FAILED_CASE_TESTRUN_WITHIN_DAYS => Filter test run within day period (default 3 days)
 NOTIFICATION_FAILED_CASE_TESTRUN_WITHIN_DAYS=3
 # NOTIFICATION_FAILED_CASE_EXCLUDE_LIST => Exclude test case id from notification (The case id should be the Cxxxx in the testrun, only need the number and list cases separated by comma)
-NOTIFICATION_FAILED_CASE_EXCLUDE_LIST=1701,1778,1779,1780,1781,1782,1783,1714,1701,1923,1797,1927,1800
+NOTIFICATION_FAILED_CASE_EXCLUDE_LIST=
 ```
 
 ### Useful Annotations
