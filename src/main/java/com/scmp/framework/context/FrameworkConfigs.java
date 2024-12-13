@@ -129,7 +129,7 @@ public class FrameworkConfigs {
 	@Value("${NOTIFICATION_TESTRUN_COUNT:3}")
 	private int failedCaseNotificationCount;
 
-	@Value("${NOTIFICATION_FAILED_CASE_TESTRUN_WITHIN_DAYS:10}")
+	@Value("${NOTIFICATION_FAILED_CASE_TESTRUN_WITHIN_DAYS:3}")
 	private int failedCaseTestRunWithinDays;
 
 	@Value("${NOTIFICATION_FAILED_CASE_EXCLUDE_LIST:#{''}}")
