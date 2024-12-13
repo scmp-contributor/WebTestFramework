@@ -50,6 +50,7 @@ public class SuiteListener implements ISuiteListener {
 
 		// Log consecutive failed test cases
 		if(!runTimeContext.isLocalExecutionMode() && frameworkConfigs.isSendFailedCaseNotification()){
+			frameworkLogger.info("Logging consecutive failed test cases...");
 			logConsecutiveFailedTestCase();
 		}
 	}
@@ -245,7 +246,7 @@ public class SuiteListener implements ISuiteListener {
 				frameworkLogger.info("Consecutive failed test cases: ");
 				finalResultMap.forEach((k,v) -> frameworkLogger.info("Test Case ID: {}, Title: {}", k, v));
 			}else{
-				frameworkLogger.info("No consecutive failed test cases found on master branch.");
+				frameworkLogger.info("No consecutive failed test cases found.");
 			}
 
 		}catch (Exception e){
