@@ -17,8 +17,6 @@ import org.springframework.context.ApplicationContext;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
 
-import com.slack.api.Slack;
-
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
