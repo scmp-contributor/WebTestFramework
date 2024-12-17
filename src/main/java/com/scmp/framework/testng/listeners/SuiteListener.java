@@ -5,6 +5,7 @@ import com.scmp.framework.annotations.testrail.TestRailTestCase;
 import com.scmp.framework.context.ApplicationContextProvider;
 import com.scmp.framework.context.FrameworkConfigs;
 import com.scmp.framework.context.RunTimeContext;
+import com.scmp.framework.slackbot.SlackbotService;
 import com.scmp.framework.testrail.TestRailManager;
 import com.scmp.framework.testrail.TestRailStatus;
 import com.scmp.framework.testrail.models.TestRun;
@@ -20,6 +21,7 @@ import org.testng.ISuiteListener;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -33,6 +35,7 @@ public class SuiteListener implements ISuiteListener {
 	private final RunTimeContext runTimeContext;
 	private final FrameworkConfigs frameworkConfigs;
 	private final TestRailManager testRailManager;
+	private final SlackbotService slackbotService;
 
 	public SuiteListener() {
 		// TestNG's context doesn't load the Application context from Spring
@@ -41,6 +44,7 @@ public class SuiteListener implements ISuiteListener {
 		runTimeContext = context.getBean(RunTimeContext.class);
 		testRailManager = context.getBean(TestRailManager.class);
 		frameworkConfigs = context.getBean(FrameworkConfigs.class);
+		slackbotService = context.getBean(SlackbotService.class);
 	}
 
 	@Override
@@ -193,6 +197,7 @@ public class SuiteListener implements ISuiteListener {
 	 * 2. For each test run, it will filter the failed case
 	 * 3. Filter out which test cases are not in all test runs and remove it from the final list
 	 * 4. Filter out which test cases are in the exclude list and remove it from the final list
+	 * 5. Send the final list to Slack channel
 	 */
 	private void logConsecutiveFailedTestCase() {
 
@@ -244,7 +249,6 @@ public class SuiteListener implements ISuiteListener {
 			HashSet<String> excludeTestCase = new HashSet<>(Arrays.asList(frameworkConfigs.getFailedCaseExcludeList().split(",")));
 			finalResultMap.keySet().removeIf(testId -> excludeTestCase.contains(String.valueOf(testId)));
 
-
 			// Display list
 			if (!finalResultMap.isEmpty()) {
 				frameworkLogger.info("Consecutive failed test cases: ");
@@ -252,6 +256,22 @@ public class SuiteListener implements ISuiteListener {
 			} else {
 				frameworkLogger.info("No consecutive failed test cases found.");
 			}
+
+			// Send message to Slack
+			AtomicReference<String> message = new AtomicReference<>("");
+			String notifyUserMessage;
+
+			if(!frameworkConfigs.getFailedCaseNotificationSlackUserId().isEmpty()){
+				String notifyUserMessageFormat = "Hi <@%s>, please find the following test cases that failed for %s consecutive runs in test run: <%sindex.php?/runs/view/%s|%s>\n";
+				notifyUserMessage = String.format(notifyUserMessageFormat, frameworkConfigs.getFailedCaseNotificationSlackUserId(), frameworkConfigs.getFailedCaseNotificationCount(), frameworkConfigs.getTestRailServer(), runs.get(0).getId(), runs.get(0).getName());
+			}else{
+				String notifyUserMessageFormat = "Hi, please find the following test cases that failed for %s consecutive runs in test run: <%sindex.php?/runs/view/%s|%s>\n";
+				notifyUserMessage = String.format(notifyUserMessageFormat, frameworkConfigs.getTestRailServer(), frameworkConfigs.getFailedCaseNotificationCount(), runs.get(0).getId(), runs.get(0).getName());
+			}
+
+			message.set(notifyUserMessage);
+			finalResultMap.forEach((k,v) -> message.set(message + "\n>Test Case ID: " + k + " - " + v));
+			slackbotService.sendMessageToSlackChannel(frameworkConfigs.getFailedCaseNotificationSlackWebhook(), message.get());
 
 		} catch (Exception e) {
 			frameworkLogger.error("Failed to get consecutive failed test cases", e);
