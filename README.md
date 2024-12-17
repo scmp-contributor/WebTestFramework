@@ -112,6 +112,10 @@ NOTIFICATION_TESTRUN_COUNT=3
 NOTIFICATION_FAILED_CASE_TESTRUN_WITHIN_DAYS=3
 # NOTIFICATION_FAILED_CASE_EXCLUDE_LIST => Exclude test case id from notification (The case id should be the Cxxxx in the testrun, only need the number and list cases separated by comma)
 NOTIFICATION_FAILED_CASE_EXCLUDE_LIST=
+# NOTIFICATION_FAILED_CASE_SLACK_USERID => Slack user id to send notification, can be found on slack personal profile, start with "U"
+NOTIFICATION_FAILED_CASE_SLACK_USERID=
+# NOTIFICATION_SLACK_WEBHOOK => Slack webhook to send notification
+NOTIFICATION_SLACK_WEBHOOK=
 ```
 
 ### Useful Annotations
@@ -154,7 +158,7 @@ TestLogger logger = new TestLogger();
 ## Changelog
 *4.4.3*
 - **[Enhancement]**
-  - Add logic to filter and show consecutive fail Testrail test case
+  - Add logic to filter and show consecutive fail Testrail test case and send in slack channel
   
 *4.4.2*
 - **[Bug Fix]**
