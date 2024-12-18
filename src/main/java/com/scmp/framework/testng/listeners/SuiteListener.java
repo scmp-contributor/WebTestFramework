@@ -5,7 +5,7 @@ import com.scmp.framework.annotations.testrail.TestRailTestCase;
 import com.scmp.framework.context.ApplicationContextProvider;
 import com.scmp.framework.context.FrameworkConfigs;
 import com.scmp.framework.context.RunTimeContext;
-import com.scmp.framework.slackbot.SlackbotService;
+import com.scmp.framework.services.SlackbotService;
 import com.scmp.framework.testrail.TestRailManager;
 import com.scmp.framework.testrail.TestRailStatus;
 import com.scmp.framework.testrail.models.TestRun;
@@ -201,23 +201,34 @@ public class SuiteListener implements ISuiteListener {
 	 */
 	private void logConsecutiveFailedTestCase() {
 
+		// Variable for sending notification
+		String userId = frameworkConfigs.getFailedCaseNotificationUserId();
+		String testRailServer = frameworkConfigs.getTestRailServer();
+		String slackWebhook = frameworkConfigs.getFailedCaseNotificationSlackWebhook();
+
+		// Variable for filtering test cases
 		String projectId = frameworkConfigs.getTestRailProjectId();
+		int notificationCount = frameworkConfigs.getFailedCaseNotificationCount();
+		int failedCaseTestRunWithinDays = frameworkConfigs.getFailedCaseTestRunWithinDays();
+		String failedCaseTestRunNotificationPattern = frameworkConfigs.getFailedCaseTestRunNotificationPattern();
+		String failedCaseExcludeList = frameworkConfigs.getFailedCaseExcludeList();
 
 		// Timestamp x days before set in the configuration
 		LocalDate today = LocalDate.now(runTimeContext.getZoneId());
-		String timestamp = String.valueOf(today.minusDays(frameworkConfigs.getFailedCaseTestRunWithinDays()).atStartOfDay(runTimeContext.getZoneId()).toEpochSecond());
+		String timestamp = String.valueOf(today.minusDays(failedCaseTestRunWithinDays).atStartOfDay(runTimeContext.getZoneId()).toEpochSecond());
 		HashSet<Integer> failedTestCasesIdSet = new HashSet<>();
 		boolean isFirstRunLoop = true;
 		Map<Integer, String> finalResultMap = new HashMap<>();
+		List<TestRun> runs;
 
 		try {
 
-			Pattern matchTestRunPattern = Pattern.compile(frameworkConfigs.getFailedCaseTestRunNotificationPattern());
+			Pattern matchTestRunPattern = Pattern.compile(failedCaseTestRunNotificationPattern);
 
 			// Get the latest x test runs and match with pattern set in configuration
-			List<TestRun> runs = testRailManager.getTestRuns(projectId, timestamp).getTestRunList().stream()
+			runs = testRailManager.getTestRuns(projectId, timestamp).getTestRunList().stream()
 					.filter(testRun -> matchTestRunPattern.matcher(testRun.getName()).find())
-					.limit(frameworkConfigs.getFailedCaseNotificationCount())
+					.limit(notificationCount)
 					.toList();
 
 			// Search for consecutive failed test cases
@@ -241,40 +252,44 @@ public class SuiteListener implements ISuiteListener {
 					failedTestCasesIdSet.retainAll(runResult.keySet());
 				}
 			}
-
-			// Remove those test that are failed first time only but not consecutive times
-			finalResultMap.keySet().removeIf(testId -> !failedTestCasesIdSet.contains(testId));
-
-			// Remove test case in exclude list
-			HashSet<String> excludeTestCase = new HashSet<>(Arrays.asList(frameworkConfigs.getFailedCaseExcludeList().split(",")));
-			finalResultMap.keySet().removeIf(testId -> excludeTestCase.contains(String.valueOf(testId)));
-
-			// Display list
-			if (!finalResultMap.isEmpty()) {
-				frameworkLogger.info("Consecutive failed test cases: ");
-				finalResultMap.forEach((k, v) -> frameworkLogger.info("Test Case ID: {}, Title: {}", k, v));
-			} else {
-				frameworkLogger.info("No consecutive failed test cases found.");
-			}
-
-			// Send message to Slack
-			AtomicReference<String> message = new AtomicReference<>("");
-			String notifyUserMessage;
-
-			if(!frameworkConfigs.getFailedCaseNotificationSlackUserId().isEmpty()){
-				String notifyUserMessageFormat = "Hi <@%s>, please find the following test cases that failed for %s consecutive runs in test run: <%sindex.php?/runs/view/%s|%s>\n";
-				notifyUserMessage = String.format(notifyUserMessageFormat, frameworkConfigs.getFailedCaseNotificationSlackUserId(), frameworkConfigs.getFailedCaseNotificationCount(), frameworkConfigs.getTestRailServer(), runs.get(0).getId(), runs.get(0).getName());
-			}else{
-				String notifyUserMessageFormat = "Hi, please find the following test cases that failed for %s consecutive runs in test run: <%sindex.php?/runs/view/%s|%s>\n";
-				notifyUserMessage = String.format(notifyUserMessageFormat, frameworkConfigs.getTestRailServer(), frameworkConfigs.getFailedCaseNotificationCount(), runs.get(0).getId(), runs.get(0).getName());
-			}
-
-			message.set(notifyUserMessage);
-			finalResultMap.forEach((k,v) -> message.set(message + "\n>Test Case ID: " + k + " - " + v));
-			slackbotService.sendMessageToSlackChannel(frameworkConfigs.getFailedCaseNotificationSlackWebhook(), message.get());
-
-		} catch (Exception e) {
-			frameworkLogger.error("Failed to get consecutive failed test cases", e);
+		} catch (IOException e) {
+			frameworkLogger.error("Failed to get consecutive failed test cases from Testrail", e);
+			return;
 		}
+
+		// Remove those test that are failed first time only but not consecutive times
+		finalResultMap.keySet().removeIf(testId -> !failedTestCasesIdSet.contains(testId));
+
+		// Remove test case in exclude list
+		HashSet<String> excludeTestCase = new HashSet<>(Arrays.asList(failedCaseExcludeList.split(",")));
+		finalResultMap.keySet().removeIf(testId -> excludeTestCase.contains(String.valueOf(testId)));
+
+		// Display list
+		if (!finalResultMap.isEmpty()) {
+			frameworkLogger.info("Consecutive failed test cases: ");
+			finalResultMap.forEach((k, v) -> frameworkLogger.info("Test Case ID: {}, Title: {}", k, v));
+		} else {
+			frameworkLogger.info("No consecutive failed test cases found.");
+			return;
+		}
+
+		int firstRunId = runs.get(0).getId();
+		String firstRunName = runs.get(0).getName();
+
+		// Send message to Slack
+		AtomicReference<String> message = new AtomicReference<>("");
+		String notifyUserMessage;
+
+		if (!frameworkConfigs.getFailedCaseNotificationUserId().isEmpty()) {
+			String notifyUserMessageFormat = "Hi <@%s>, please find the following test cases that failed for %s consecutive runs in test run: <%sindex.php?/runs/view/%s|%s>\n";
+			notifyUserMessage = String.format(notifyUserMessageFormat, userId, notificationCount, testRailServer, firstRunId, firstRunName);
+		} else {
+			String notifyUserMessageFormat = "Hi, please find the following test cases that failed for %s consecutive runs in test run: <%sindex.php?/runs/view/%s|%s>\n";
+			notifyUserMessage = String.format(notifyUserMessageFormat, testRailServer, notificationCount, firstRunId, firstRunName);
+		}
+
+		message.set(notifyUserMessage);
+		finalResultMap.forEach((k, v) -> message.set(message + "\n>Test Case ID: " + k + " - " + v));
+		slackbotService.sendMessageToSlackChannel(slackWebhook, message.get());
 	}
 }

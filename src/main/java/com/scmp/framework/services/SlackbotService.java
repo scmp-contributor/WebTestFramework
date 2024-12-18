@@ -1,15 +1,11 @@
-package com.scmp.framework.slackbot;
+package com.scmp.framework.services;
 
 import com.scmp.framework.context.ApplicationContextProvider;
-import com.scmp.framework.context.FrameworkConfigs;
-import com.scmp.framework.context.RunTimeContext;
 import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
-
-import java.io.IOException;
 
 @Component
 public class SlackbotService {

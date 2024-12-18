@@ -135,8 +135,8 @@ public class FrameworkConfigs {
 	@Value("${NOTIFICATION_FAILED_CASE_EXCLUDE_LIST:#{''}}")
 	private String failedCaseExcludeList;
 
-	@Value("${NOTIFICATION_FAILED_CASE_SLACK_USERID:#{''}}")
-	private String failedCaseNotificationSlackUserId;
+	@Value("${NOTIFICATION_FAILED_CASE_SLACK_USERID:${GITLAB_USER_LOGIN:}}")
+	private String failedCaseNotificationUserId;
 
 	@Value("${NOTIFICATION_FAILED_CASE_SLACK_WEBHOOK:#{''}}")
 	private String failedCaseNotificationSlackWebhook;
