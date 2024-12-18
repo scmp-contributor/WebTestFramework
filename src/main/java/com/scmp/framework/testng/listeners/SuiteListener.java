@@ -21,7 +21,6 @@ import org.testng.ISuiteListener;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -277,7 +276,7 @@ public class SuiteListener implements ISuiteListener {
 		String firstRunName = runs.get(0).getName();
 
 		// Send message to Slack
-		AtomicReference<String> message = new AtomicReference<>("");
+		StringBuilder message = new StringBuilder();
 		String notifyUserMessage;
 
 		if (!frameworkConfigs.getFailedCaseNotificationUserId().isEmpty()) {
@@ -288,8 +287,8 @@ public class SuiteListener implements ISuiteListener {
 			notifyUserMessage = String.format(notifyUserMessageFormat, testRailServer, notificationCount, firstRunId, firstRunName);
 		}
 
-		message.set(notifyUserMessage);
-		finalResultMap.forEach((k, v) -> message.set(message + "\n>Test Case ID: " + k + " - " + v));
-		slackbotService.sendMessageToSlackChannel(slackWebhook, message.get());
+		message.append(notifyUserMessage);
+		finalResultMap.forEach((k, v) -> message.append("\n>Test Case ID: ").append(k).append(" - ").append(v));
+		slackbotService.sendMessageToSlackChannel(slackWebhook, message.toString());
 	}
 }
