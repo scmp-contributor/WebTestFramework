@@ -100,6 +100,22 @@ FEATURE_DESCRIPTION=
 DRIVER_HOME=drivers
 # With local execution mode(debug mode) ON, browser will be launched locally using driver in DRIVER_HOME
 LOCAL_EXECUTION=ON
+
+######################## FAILED_TESTCASE_NOTIFICATION ########################
+# NOTIFICATION_SEND_FAILED_CASE => Whether send fail case notification or not
+NOTIFICATION_SEND_FAILED_CASE=false
+# NOTIFICATION_FAILED_CASE_TESTRUN_PATTERN.regexp => Regex to search failed case for test run
+NOTIFICATION_FAILED_CASE_TESTRUN_PATTERN.regexp=Automated Test Run \d{1,2}/\d{1,2}/\d{4} master
+# NOTIFICATION_TESTRUN_COUNT => Number of test run to search for failed case (default 3 test runs)
+NOTIFICATION_TESTRUN_COUNT=3
+# NOTIFICATION_FAILED_CASE_TESTRUN_WITHIN_DAYS => Filter test run within day period (default 3 days)
+NOTIFICATION_FAILED_CASE_TESTRUN_WITHIN_DAYS=3
+# NOTIFICATION_FAILED_CASE_EXCLUDE_LIST => Exclude test case id from notification (The case id should be the Cxxxx in the testrun, only need the number and list cases separated by comma)
+NOTIFICATION_FAILED_CASE_EXCLUDE_LIST=
+# NOTIFICATION_FAILED_CASE_SLACK_USERID => Slack user id to send notification, can be found on slack personal profile, start with "U"
+NOTIFICATION_FAILED_CASE_SLACK_USERID=
+# NOTIFICATION_SLACK_WEBHOOK => Slack webhook to send notification
+NOTIFICATION_SLACK_WEBHOOK=
 ```
 
 ### Useful Annotations
@@ -140,6 +156,10 @@ TestLogger logger = new TestLogger();
 | `String captureScreen()`         | Returning the file path of the screenshot              |
 
 ## Changelog
+*4.4.3*
+- **[Enhancement]**
+  - Add logic to filter and show consecutive fail Testrail test case and send in slack channel
+  
 *4.4.2*
 - **[Bug Fix]**
   - Fixed Headless mode issue for Chrome in older versions

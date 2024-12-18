@@ -119,4 +119,25 @@ public class FrameworkConfigs {
 
 	@Value("${EXTENT_XML_PATH:#{null}}")
 	private String extentXMLPath;
+
+	@Value("${NOTIFICATION_SEND_FAILED_CASE:#{false}}")
+	private boolean sendFailedCaseNotification;
+
+	@Value("${NOTIFICATION_FAILED_CASE_TESTRUN_PATTERN.regexp:#{''}}")
+	private String failedCaseTestRunNotificationPattern;
+
+	@Value("${NOTIFICATION_TESTRUN_COUNT:3}")
+	private int failedCaseNotificationCount;
+
+	@Value("${NOTIFICATION_FAILED_CASE_TESTRUN_WITHIN_DAYS:3}")
+	private int failedCaseTestRunWithinDays;
+
+	@Value("${NOTIFICATION_FAILED_CASE_EXCLUDE_LIST:#{''}}")
+	private String failedCaseExcludeList;
+
+	@Value("${NOTIFICATION_FAILED_CASE_SLACK_USERID:${GITLAB_USER_LOGIN:}}")
+	private String failedCaseNotificationUserId;
+
+	@Value("${NOTIFICATION_FAILED_CASE_SLACK_WEBHOOK:#{''}}")
+	private String failedCaseNotificationSlackWebhook;
 }
