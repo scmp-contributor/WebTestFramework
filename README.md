@@ -104,8 +104,8 @@ LOCAL_EXECUTION=ON
 ######################## FAILED_TESTCASE_NOTIFICATION ########################
 # NOTIFICATION_SEND_FAILED_CASE => Whether send fail case notification or not
 NOTIFICATION_SEND_FAILED_CASE=false
-# NOTIFICATION_FAILED_CASE_TESTRUN_PATTERN.regexp => Regex to search failed case for test run
-NOTIFICATION_FAILED_CASE_TESTRUN_PATTERN.regexp=Automated Test Run \d{1,2}/\d{1,2}/\d{4} master
+# NOTIFICATION_FAILED_CASE_TESTRUN_PATTERN_REGEXP => Regex to search failed case for test run
+NOTIFICATION_FAILED_CASE_TESTRUN_PATTERN_REGEXP=Automated Test Run \d{1,2}/\d{1,2}/\d{4} master
 # NOTIFICATION_TESTRUN_COUNT => Number of test run to search for failed case (default 3 test runs)
 NOTIFICATION_TESTRUN_COUNT=3
 # NOTIFICATION_FAILED_CASE_TESTRUN_WITHIN_DAYS => Filter test run within day period (default 3 days)
@@ -156,6 +156,10 @@ TestLogger logger = new TestLogger();
 | `String captureScreen()`         | Returning the file path of the screenshot              |
 
 ## Changelog
+*4.4.4*
+- **[Bug Fix]**
+  - Fixed send message TestRail test run match variable name
+  
 *4.4.3*
 - **[Enhancement]**
   - Add logic to filter and show consecutive fail Testrail test case and send in slack channel

@@ -123,7 +123,7 @@ public class FrameworkConfigs {
 	@Value("${NOTIFICATION_SEND_FAILED_CASE:#{false}}")
 	private boolean sendFailedCaseNotification;
 
-	@Value("${NOTIFICATION_FAILED_CASE_TESTRUN_PATTERN.regexp:#{''}}")
+	@Value("${NOTIFICATION_FAILED_CASE_TESTRUN_PATTERN_REGEXP:#{''}}")
 	private String failedCaseTestRunNotificationPattern;
 
 	@Value("${NOTIFICATION_TESTRUN_COUNT:3}")
