@@ -11,6 +11,7 @@ import com.scmp.framework.testrail.TestRailStatus;
 import com.scmp.framework.testrail.models.TestRun;
 import com.scmp.framework.testrail.models.TestRunResult;
 import com.scmp.framework.testrail.models.TestRunTest;
+import com.scmp.framework.utils.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -211,6 +212,7 @@ public class SuiteListener implements ISuiteListener {
 		int failedCaseTestRunWithinDays = frameworkConfigs.getFailedCaseTestRunWithinDays();
 		String failedCaseTestRunNotificationPattern = frameworkConfigs.getFailedCaseTestRunNotificationPattern();
 		String failedCaseExcludeList = frameworkConfigs.getFailedCaseExcludeList();
+		String featureDescription = frameworkConfigs.getFeatureDescription();
 
 		// Timestamp x days before set in the configuration
 		LocalDate today = LocalDate.now(runTimeContext.getZoneId());
@@ -221,6 +223,15 @@ public class SuiteListener implements ISuiteListener {
 		List<TestRun> runs;
 
 		try {
+
+			// Special handling for FEATURE_DESCRIPTION
+			if(!featureDescription.isEmpty()) {
+
+				failedCaseTestRunNotificationPattern = failedCaseTestRunNotificationPattern.replace(featureDescription, "");
+
+				String newFeatureDescription = StringUtils.getEscapedRegexString(featureDescription);
+				failedCaseTestRunNotificationPattern = failedCaseTestRunNotificationPattern + newFeatureDescription;
+			}
 
 			Pattern matchTestRunPattern = Pattern.compile(failedCaseTestRunNotificationPattern);
 
