@@ -245,7 +245,7 @@ public class SuiteListener implements ISuiteListener {
 			for (TestRun run : runs) {
 
 				// Skip listing if the test run is in progress
-				if (!testRailManager.getAllTestRunTests(run.getId(), String.valueOf(TestRailStatus.IN_PROGRESS)).isEmpty()) {
+				if (isFirstRunLoop && !testRailManager.getAllTestRunTests(run.getId(), String.valueOf(TestRailStatus.IN_PROGRESS)).isEmpty()) {
 					return;
 				}
 
