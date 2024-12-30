@@ -156,6 +156,12 @@ TestLogger logger = new TestLogger();
 | `String captureScreen()`         | Returning the file path of the screenshot              |
 
 ## Changelog
+*4.4.5*
+- **[Bug Fix]**
+  - Add StringUtil and method to escape special regex characters
+- **[Enhancement]**
+  - Only check whether the first test run is in progress when checking consecutive fail test case
+
 *4.4.4*
 - **[Bug Fix]**
   - Fixed send message TestRail test run match variable name
