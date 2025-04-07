@@ -123,6 +123,9 @@ public class FrameworkConfigs {
 	@Value("${NOTIFICATION_SEND_FAILED_CASE:#{false}}")
 	private boolean sendFailedCaseNotification;
 
+	@Value("${NOTIFICATION_SEND_SUDDEN_FAILED_CASE:#{false}}")
+	private boolean sendSuddenFailedCaseNotification;
+
 	@Value("${NOTIFICATION_FAILED_CASE_TESTRUN_PATTERN_REGEXP:#{''}}")
 	private String failedCaseTestRunNotificationPattern;
 
@@ -135,7 +138,7 @@ public class FrameworkConfigs {
 	@Value("${NOTIFICATION_FAILED_CASE_TESTRUN_WITHIN_DAYS:3}")
 	private int failedCaseTestRunWithinDays;
 
-	@Value("${NOTIFICATION_FAILED_CASE_FLAKY_COUNT_WITHIN_DAYS:10}")
+	@Value("${NOTIFICATION_FAILED_CASE_FLAKY_COUNT_WITHIN_DAYS:5}")
 	private int failedCaseFlakyCountWithinDays;
 
 	@Value("${NOTIFICATION_FAILED_CASE_EXCLUDE_LIST:#{''}}")
