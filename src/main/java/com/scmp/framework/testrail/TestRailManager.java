@@ -166,14 +166,14 @@ public class TestRailManager {
 	 * @return a list of test results
 	 * @throws IOException if an I/O error occurs
 	 */
-	public List<TestResult> getTestResultsForTestCase(int runId, int testcaseId) throws IOException {
+	public TestCaseResult getTestResultsForTestCase(int runId, int testcaseId) throws IOException {
 		String CustomQuery = String.format(TestRailService.GET_TEST_RESULTS_FOR_TEST_CASE_API, runId, testcaseId);
 		TestRailService service = retrofit.create(TestRailService.class);
 
 		Map<String, String> data = new LinkedHashMap<>();
 		data.put(CustomQuery, "");
 
-		retrofit2.Response<List<TestResult>> response = service.getTestResultsForTestCase(data).execute();
+		retrofit2.Response<TestCaseResult> response = service.getTestResultsForTestCase(data).execute();
 		if (!response.isSuccessful()) {
 			frameworkLogger.error("Request getTestCases Failed with Error Code: {}, Error Body: {}", response.code(), response.errorBody().string());
 			frameworkLogger.error("RunId: {}, TestCaseId: {}", runId, testcaseId);

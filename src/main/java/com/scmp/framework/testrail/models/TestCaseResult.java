@@ -8,7 +8,7 @@ import java.util.List;
 @Data
 public class TestCaseResult {
 
-	@SerializedName("cases")
+	@SerializedName("results")
 	List<TestRunTest> TestRunTestList;
 
 	@SerializedName("offset")
