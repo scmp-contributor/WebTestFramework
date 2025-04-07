@@ -302,4 +302,113 @@ public class SuiteListener implements ISuiteListener {
 		finalResultMap.forEach((k, v) -> message.append("\n>Test Case ID: ").append(k).append(" - ").append(v));
 		slackbotService.sendMessageToSlackChannel(slackWebhook, message.toString());
 	}
+
+	private void logFailedStableTestCases(){
+
+		// Variable for sending notification
+		String userId = frameworkConfigs.getFailedCaseNotificationUserId();
+		String testRailServer = frameworkConfigs.getTestRailServer();
+		String slackWebhook = frameworkConfigs.getFailedCaseNotificationSlackWebhook();
+
+		// Variable for filtering test cases
+		String projectId = frameworkConfigs.getTestRailProjectId();
+		int failedCaseFlakyCountWithinDays = frameworkConfigs.getFailedCaseFlakyCountWithinDays();
+		String failedCaseTestRunNotificationPattern = "Automated Test Run \\d{1,2}/\\d{1,2}/\\d{4} master";
+		String failedCaseExcludeList = frameworkConfigs.getFailedCaseExcludeList();
+		String featureDescription = frameworkConfigs.getFeatureDescription();
+
+		// Timestamp x days before set in the configuration
+		LocalDate today = LocalDate.now(runTimeContext.getZoneId());
+		String timestamp = String.valueOf(today.minusDays(failedCaseFlakyCountWithinDays).atStartOfDay(runTimeContext.getZoneId()).toEpochSecond());
+		HashSet<Integer> failedTestCasesIdSet = new HashSet<>();
+		boolean isFirstRunLoop = true;
+		Map<Integer, String> finalResultMap = new HashMap<>();
+		HashSet<String> excludeTestCase = new HashSet<>(Arrays.asList(failedCaseExcludeList.split(",")));
+		List<TestRun> runs;
+
+		try{
+
+			// Special handling for FEATURE_DESCRIPTION
+			if(!featureDescription.isEmpty()) {
+
+				failedCaseTestRunNotificationPattern = failedCaseTestRunNotificationPattern.replace(featureDescription, "");
+
+				String newFeatureDescription = StringUtils.getEscapedRegexString(featureDescription);
+				failedCaseTestRunNotificationPattern = failedCaseTestRunNotificationPattern + newFeatureDescription;
+			}
+
+			Pattern matchTestRunPattern = Pattern.compile(failedCaseTestRunNotificationPattern);
+
+			// Get the latest x test runs and match with pattern set in configuration
+			runs = testRailManager.getTestRuns(projectId, timestamp).getTestRunList().stream()
+					.filter(testRun -> matchTestRunPattern.matcher(testRun.getName()).find())
+					.limit(failedCaseFlakyCountWithinDays + 1)
+					.toList();
+
+
+			TestRun run = runs.get(0);
+
+			// Skip listing if the test run is in progress
+			if (isFirstRunLoop && !testRailManager.getAllTestRunTests(run.getId(), String.valueOf(TestRailStatus.IN_PROGRESS)).isEmpty()) {
+				return;
+			}
+
+			// Get all failed test cases
+			Map<Integer, String> runResult = testRailManager.getAllTestRunTests(run.getId(), String.valueOf(TestRailStatus.Failed))
+					.stream()
+					.filter(k -> !excludeTestCase.contains(String.valueOf(k.getCaseId())))
+					.collect(Collectors.toMap(TestRunTest::getCaseId, TestRunTest::getTitle));
+
+			// For every failed test case, check if it is flaky
+			for(int j = 0; j < runResult.keySet().size(); j++){
+				ArrayList<TestCaseResult> testCaseResults = new ArrayList<>();
+				boolean isStable = false;
+
+				// Check for x previous test runs
+				for(int k = 0; k < failedCaseFlakyCountWithinDays; k++){
+					TestCaseResult result = testRailManager.getTestResultsForTestCase(runs.get(k+1).getId(), runResult.keySet().stream().toList().get(j));
+					testCaseResults.add(result);
+				}
+
+				Thread.sleep(500);
+
+				long passCount = testCaseResults.stream().filter(testCaseResult -> testCaseResult.getTestRunTestList().get(0).getStatusId() == TestRailStatus.Passed)
+						.count();
+
+				if(passCount == failedCaseFlakyCountWithinDays){
+					isStable = true;
+				}
+
+				// If 5 consecutive test runs are passed, and this test case is failed, add it to the final result
+				if(isStable){
+					finalResultMap.put(runResult.keySet().stream().toList().get(j), runResult.values().stream().toList().get(j));
+				}
+
+				System.out.println("Test Case ID: " + runResult.keySet().stream().toList().get(j) + " - " + runResult.values().stream().toList().get(j));
+			}
+
+			// Send message to Slack
+			StringBuilder message = new StringBuilder();
+			String notifyUserMessage;
+			int firstRunId = runs.get(0).getId();
+			String firstRunName = runs.get(0).getName();
+
+			if (!frameworkConfigs.getFailedCaseNotificationUserId().isEmpty()) {
+				String notifyUserMessageFormat = "Hi <@%s>, please find the following stable test cases that suddenly failed: <%sindex.php?/runs/view/%s|%s>\n";
+				notifyUserMessage = String.format(notifyUserMessageFormat, userId, testRailServer, firstRunId, firstRunName);
+			} else {
+				String notifyUserMessageFormat = "Hi, please find the following stable test cases that suddenly failed: <%sindex.php?/runs/view/%s|%s>\n";
+				notifyUserMessage = String.format(notifyUserMessageFormat, testRailServer, firstRunId, firstRunName);
+			}
+
+			message.append(notifyUserMessage);
+			finalResultMap.forEach((k, v) -> message.append("\n>Test Case ID: ").append(k).append(" - ").append(v));
+
+		} catch (IOException e) {
+			frameworkLogger.error("Failed to get consecutive failed test cases from Testrail", e);
+			return;
+		} catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
